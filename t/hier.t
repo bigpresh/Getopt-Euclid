@@ -1,3 +1,6 @@
+#! /usr/bin/env perl
+# The shebang line above is part of the test
+
 BEGIN {
     $INFILE  = $0;
     $OUTFILE = $0;

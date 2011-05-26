@@ -349,6 +349,7 @@ sub _process_prog_pod {
 
     # Sanitize PODs by removing quoted strings that may contain POD text
     # FEA: this code is quite slow for long PODs!
+    $man =~ s/^#!.*//g; # remove the shebang line since it can confuse the parser
     for my $quoted (
         extract_multiple($man, [sub{extract_quotelike($_[0])}], undef, 1) ) {
         my $to_match = quotemeta($quoted);
