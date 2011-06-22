@@ -72,29 +72,29 @@ my $man = '=head1 NAME
 
 =over
 
-=item --version
-
 =item size <h>x<w>
 
 Specify height and width
-
-=item --man
-
-Print the usual program information
-
-=item --timeout [<min>] [<max>]
 
 =item -l[[en][gth]] <l>
 
 Display length [default: 24 ]
 
-=item --usage
-
 =item -v[erbose]
 
 Print all warnings
 
+=item --timeout [<min>] [<max>]
+
+=item --version
+
+=item --usage
+
 =item --help
+
+=item --man
+
+Print the usual program information
 
 =back
 
@@ -122,18 +122,19 @@ and/or modified under the terms of the Perl Artistic License
 
 =over
 
-=item -o[ut][file]= <file>
-
-Specify output file
-
 =item -i[nfile]  [=]<file>
 
 Specify input file
+
+=item -o[ut][file]= <file>
+
+Specify output file
 
 =back
 
 
 ';
+
 my $man_test = Getopt::Euclid->man();
 is $man_test, $man, 'Man page is as expected';
 

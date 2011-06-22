@@ -29,13 +29,13 @@ my $help = <<END;
 
 =over
 
-=item -o[ut][file]= <out_file>
-
-Specify output file [default: -]
-
 =item -i[nfile]  [=]<file>
 
 Specify input file [default: -]
+
+=item -o[ut][file]= <out_file>
+
+Specify output file [default: -]
 
 =back
 
@@ -53,35 +53,35 @@ Specify height and width [default: 1.8 x 0.2]
 
 Display lengths [default: 24 36.3 10]
 
-=item <step>
-
-Step size [default: none]
-
 =item -girth <g value>
 
 Display girth [default: 42]
-
-=item --usage
 
 =item -v[erbose]
 
 Print all warnings
 
-=item -w <space> | --with <space>
-
-Test something spaced
-
-=item --version
-
-=item --man
-
-Print the usual program information
-
 =item --timeout [<min>] [<max>]
 
 [default: min=none and max=-1]
 
+=item -w <space> | --with <space>
+
+Test something spaced
+
+=item <step>
+
+Step size [default: none]
+
+=item --version
+
+=item --usage
+
 =item --help
+
+=item --man
+
+Print the usual program information
 
 =back
 
@@ -112,13 +112,13 @@ q{=head1 NAME
 
 =over
 
-=item -o[ut][file]= <out_file>
-
-Specify output file [default: -]
-
 =item -i[nfile]  [=]<file>
 
 Specify input file [default: -]
+
+=item -o[ut][file]= <out_file>
+
+Specify output file [default: -]
 
 =back
 
@@ -136,35 +136,35 @@ Specify height and width [default: 1.8 x 0.2]
 
 Display lengths [default: 24 36.3 10]
 
-=item <step>
-
-Step size [default: none]
-
 =item -girth <g value>
 
 Display girth [default: 42]
-
-=item --usage
 
 =item -v[erbose]
 
 Print all warnings
 
-=item -w <space> | --with <space>
-
-Test something spaced
-
-=item --version
-
-=item --man
-
-Print the usual program information
-
 =item --timeout [<min>] [<max>]
 
 [default: min=none and max=-1]
 
+=item -w <space> | --with <space>
+
+Test something spaced
+
+=item <step>
+
+Step size [default: none]
+
+=item --version
+
+=item --usage
+
 =item --help
+
+=item --man
+
+Print the usual program information
 
 =back
 

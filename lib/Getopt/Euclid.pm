@@ -61,8 +61,8 @@ my %STD_CONSTRAINT_FOR = (
     'number'    => sub { 1 },            # Always okay (matcher ensures this)
     '+number'   => sub { $_[0] > 0 },
     '0+number'  => sub { $_[0] >= 0 },
-    'input' => sub { $_[0] eq '-' || -r $_[0] },
-    'output' => sub {
+    'input'     => sub { $_[0] eq '-' || -r $_[0] },
+    'output'    => sub {
         my ( $vol, $dir ) = splitpath( $_[0] );
         $dir = ($vol && $dir) ? catpath($vol, $dir) : '.';
         $_[0] eq '-' ? 1 : -e $_[0] ? -w $_[0] : -w $dir;
@@ -378,7 +378,7 @@ sub _process_prog_pod {
         $SCRIPT_VERSION = $main::VERSION;
     }
     if ( !defined $SCRIPT_VERSION ) {
-	     my $filedate = localtime((stat $0)[9]);
+        my $filedate = localtime((stat $0)[9]);
         $SCRIPT_VERSION = $filedate;
     }
     $man =~ s{ ^(=head1 $VERS    \s*) .*? (\s*) $EOHEAD }
@@ -411,8 +411,18 @@ sub _process_prog_pod {
     }
 
     # Extract the actual interface...
-    my %requireds = ( $required || q{} ) =~ m{ $EUCLID_ARG }gxms;
-    my %options   = ( $options  || q{} ) =~ m{ $EUCLID_ARG }gxms;
+    my %requireds;
+    my @requireds_order;
+    while ( ( $required || q{} ) =~ m{ $EUCLID_ARG }gxms ) {
+        push @requireds_order, $1;
+        $requireds{$1} = $2;
+    }
+    my %options;
+    my @options_order;
+    while ( ( $options  || q{} ) =~ m{ $EUCLID_ARG }gxms ) {
+        push @options_order, $1;
+        $options{$1} = $2;
+    }
 
     # Convert each arg entry to a hash...
     my $seq_num = 0;
@@ -459,8 +469,8 @@ sub _process_prog_pod {
             {$1 $SCRIPT_NAME $arg_summary $2}xms;
 
     # Insert default values (if any) in the program's documentation
-    $required = _insert_default_values(\%requireds, \%requireds_hash);
-    $options  = _insert_default_values(\%options ,  \%options_hash  );
+    $required = _insert_default_values(\%requireds, \%requireds_hash, \@requireds_order);
+    $options  = _insert_default_values(\%options  , \%options_hash  , \@options_order  );
 
     $man =~ s{ ^(=head1 $REQUIRED \s*) .*? (\s*) $EOHEAD } {$1$required$2}xms;
     $man =~ s{ ^(=head1 $OPTIONS  \s*) .*? (\s*) $EOHEAD } {$1$options$2}xms;
@@ -1069,9 +1079,10 @@ sub _process_pm_pod {
 
 
 sub _insert_default_values {
-    my ($pod_items, $args) = @_;
+    my ($pod_items, $args, $order) = @_;
     my $pod_string = '';
-    while ( my ($item_name, $item_spec) = each %$pod_items ) {
+    for my $item_name (@$order) {
+        my $item_spec = $$pod_items{$item_name};
         $item_spec =~ s/=for(.*)//ms;
         $pod_string .= "=item $item_name\n\n";
         # Get list of variable for this argument

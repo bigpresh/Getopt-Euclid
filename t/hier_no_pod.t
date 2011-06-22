@@ -20,13 +20,13 @@ my $man = '=head1 REQUIRED ARGUMENTS
 
 =over
 
-=item -o[ut][file]= <file>
-
-Specify output file
-
 =item -i[nfile]  [=]<file>
 
 Specify input file
+
+=item -o[ut][file]= <file>
+
+Specify output file
 
 =back
 

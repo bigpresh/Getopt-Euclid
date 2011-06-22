@@ -35,13 +35,13 @@ q{=head1 NAME
 
 =over
 
-=item -o[ut][file]= <out_file>
-
-Specify output file
-
 =item -i[nfile]  [=]<file>
 
 Specify input file
+
+=item -o[ut][file]= <out_file>
+
+Specify output file
 
 =back
 
@@ -55,41 +55,41 @@ Specify input file
 
 Specify height and width
 
-=item <step>
-
-Step size
-
-=item [-]-timeout [<min>] [<max>]
-
 =item -l[[en][gth]] <l>
 
 Display length [default: 24 ]
-
-=item --usage
-
-=item -v[erbose]
-
-Print all warnings
-
-=item -w <space>
-
-Test something spaced
-
-=item --version
 
 =item -girth <g>
 
 Display girth [default: 42 ]
 
+=item -v[erbose]
+
+Print all warnings
+
+=item [-]-timeout [<min>] [<max>]
+
+=item -w <space>
+
+Test something spaced
+
 =item [-]-no[-fudge]
 
 Automaticaly fudge the factors.
 
+=item <step>
+
+Step size
+
+=item --version
+
+=item --usage
+
+=item --help
+
 =item --man
 
 Print the usual program information
-
-=item --help
 
 =back
 
@@ -124,13 +124,13 @@ q{=head1 Usage:
 
 =over
 
-=item -o[ut][file]= <out_file>
-
-Specify output file
-
 =item -i[nfile]  [=]<file>
 
 Specify input file
+
+=item -o[ut][file]= <out_file>
+
+Specify output file
 
 =back
 
@@ -144,41 +144,41 @@ Specify input file
 
 Specify height and width
 
-=item <step>
-
-Step size
-
-=item [-]-timeout [<min>] [<max>]
-
 =item -l[[en][gth]] <l>
 
 Display length [default: 24 ]
-
-=item --usage
-
-=item -v[erbose]
-
-Print all warnings
-
-=item -w <space>
-
-Test something spaced
-
-=item --version
 
 =item -girth <g>
 
 Display girth [default: 42 ]
 
+=item -v[erbose]
+
+Print all warnings
+
+=item [-]-timeout [<min>] [<max>]
+
+=item -w <space>
+
+Test something spaced
+
 =item [-]-no[-fudge]
 
 Automaticaly fudge the factors.
 
+=item <step>
+
+Step size
+
+=item --version
+
+=item --usage
+
+=item --help
+
 =item --man
 
 Print the usual program information
-
-=item --help
 
 =back
 
