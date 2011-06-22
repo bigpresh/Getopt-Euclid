@@ -346,17 +346,13 @@ sub _process_prog_pod {
     $man =~ s{ E<lt> }{<}gxms;
     $man =~ s{ E<gt> }{>}gxms;
 
-    # Sanitize PODs by removing quoted strings that may contain POD text
-    # FEA: this code is quite slow for long PODs!
-    $man =~ s/^#!.*//g; # remove the shebang line since it can confuse the parser
-    for my $quoted (
-        extract_multiple($man, [sub{extract_quotelike($_[0])}], undef, 1) ) {
-        my $to_match = quotemeta($quoted);
-        if ( $man !~ m{ ($POD_CMD .*?) $to_match .*? (?: $POD_CUT | \z ) }xms ) {
-            # Quoted string is not located in a POD, remove it
-            $man =~ s{$to_match}{}xms;
-        }
-    }
+    # Sanitize PODs by removing rogue strings that contain POD text
+    $man =~ s{ <<(\S+).*? $POD_CMD .*? $POD_CMD .*? ^\1 }{<<$1;\n$1}gxms; # heredocs
+    $man =~ s{ (['"`])    $POD_CMD .*? $POD_CMD .*?  \1 }{$1$1}gxms;      # quoted
+    $man =~ s{ \(         $POD_CMD .*? $POD_CMD .*?  \) }{()}gxms;        # bracketed
+    $man =~ s{ \{         $POD_CMD .*? $POD_CMD .*?  \} }{{}}gxms;
+    $man =~ s{ \[         $POD_CMD .*? $POD_CMD .*?  \] }{[]}gxms;
+    $man =~ s{ <          $POD_CMD .*? $POD_CMD .*?  >  }{<>}gxms;
 
     # Extract POD alone...
     $man = join "\n\n", $man =~ m{ $POD_CMD .*? (?: $POD_CUT | \z ) }gxms;

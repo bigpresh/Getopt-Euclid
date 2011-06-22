@@ -135,7 +135,7 @@ Specify input file
 
 ';
 my $man_test = Getopt::Euclid->man();
-is $man_test, $man;
+is $man_test, $man, 'Man page is as expected';
 
 __END__
 
