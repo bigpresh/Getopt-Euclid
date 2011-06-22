@@ -1,20 +1,31 @@
 Revision history for Getopt-Euclid
 
 0.2.4
-  - New method to pass an arbitrary array of arguments to parsing: process_args
+  - Default values can now be specified in the POD and displayed in the program
+    documentation
+  - Support for more integer arguments, e.g. scientific notation like 1E8
+  - Support for arguments that cannot coexist using the 'exclude' keyword
   - New specifier to defer processing of @ARGV arguments: :defer
+  - New method to pass an arbitrary array of arguments to parsing: process_args
   - New methods to access the program usage, version, manual and help messages
-  - Default values can now be displayed in program's documentation
   - When a version number is missing from the POD or $main::VERSION, the file
     time and date are used as version number
-  - Bugfix: when the --man flag was passed and the script name was like 'myprog'
+  - The help message now includes --version and is more consistent with the
+    usage message
+  - Bugfix: the options in the help message are no longer randomly sorted
+  - Bugfix: the man page is now properly formed when .pm files that have no POD
+    are use'd
+  - Bugfix: when the --man flag was passed and the script name was, e.g. 'myprog'
     instead of 'myprog - short description', an undef warning was issued
   - Bugfix: when the --help flag was passed and either no required arguments or
     no optional arguments were specified in the POD, an undef warning was issued
-  - Bugfix: the POD parsing mechanisms would capture POD text located inside
+  - Bugfix: the POD parsing mechanism now removes rogue PODs hidden inside
     variables and other Perl-quoted strings
-  - The help message now includes --version and is more consistent with the
-    usage message
+  - Bugfix for #34195: addresses compatibility with Perl compiling (syntax check)
+  - Bugfix for #34207: .type.error is now taken into account properly
+  - Bugfix for #38461: file path that uses the volume and dir
+  - Bugfix for #34199: new subroutine _check_name() verifies that argument name
+    specifications are well-balanced with <> brackets
 
 0.2.3  Tue Sep 14 2010
   - #61321 - made tests that require writeable files set own properties to 644
