@@ -338,24 +338,33 @@ sub _process_prog_pod {
                         )
                     }xms;
 
-    # Clean up line delimeters
-    $man = join("\n=cut\n\n", $source, reverse @pm_pods);
-    $man =~ s{ [\n\r] }{\n}gx;
+    my @pod_array = ();
+    for my $pod ( $source, reverse @pm_pods ) {
 
-    # Clean up significant entities...
-    $man =~ s{ E<lt> }{<}gxms;
-    $man =~ s{ E<gt> }{>}gxms;
+        # Clean up line delimeters
+        $pod =~ s{ [\n\r] }{\n}gx;
 
-    # Sanitize PODs by removing rogue strings that contain POD text
-    $man =~ s{ <<(\S+).*? $POD_CMD .*? $POD_CMD .*? ^\1 }{<<$1;\n$1}gxms; # heredocs
-    $man =~ s{ (['"`])    $POD_CMD .*? $POD_CMD .*?  \1 }{$1$1}gxms;      # quoted
-    $man =~ s{ \(         $POD_CMD .*? $POD_CMD .*?  \) }{()}gxms;        # bracketed
-    $man =~ s{ \{         $POD_CMD .*? $POD_CMD .*?  \} }{{}}gxms;
-    $man =~ s{ \[         $POD_CMD .*? $POD_CMD .*?  \] }{[]}gxms;
-    $man =~ s{ <          $POD_CMD .*? $POD_CMD .*?  >  }{<>}gxms;
+        # Clean up significant entities...
+        $pod =~ s{ E<lt> }{<}gxms;
+        $pod =~ s{ E<gt> }{>}gxms;
 
-    # Extract POD alone...
-    $man = join "\n\n", $man =~ m{ $POD_CMD .*? (?: $POD_CUT | \z ) }gxms;
+        # Sanitize PODs by removing rogue strings that contain POD text
+        $pod =~ s{ <<(\S+).*? $POD_CMD .*? $POD_CMD .*? ^\1 }{<<$1;\n$1}gxms; # heredocs
+        $pod =~ s{ (['"`])    $POD_CMD .*? $POD_CMD .*?  \1 }{$1$1}gxms;      # quoted
+        $pod =~ s{ \(         $POD_CMD .*? $POD_CMD .*?  \) }{()}gxms;        # bracketed
+        $pod =~ s{ \{         $POD_CMD .*? $POD_CMD .*?  \} }{{}}gxms;
+        $pod =~ s{ \[         $POD_CMD .*? $POD_CMD .*?  \] }{[]}gxms;
+        $pod =~ s{ <          $POD_CMD .*? $POD_CMD .*?  >  }{<>}gxms;
+
+        # Extract POD alone...
+        $pod = join "\n\n", $pod =~ m{ $POD_CMD .*? (?: $POD_CUT | \z ) }gxms;      
+
+        # Append to man
+        push @pod_array, $pod if not $pod eq '';
+
+    }
+
+    $man = join("\n=cut\n\n", @pod_array);
 
     # Put program name in man
     ($SCRIPT_NAME) = ( splitpath($0) )[-1];
