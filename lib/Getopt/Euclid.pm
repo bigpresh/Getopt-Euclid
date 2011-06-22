@@ -7,7 +7,7 @@ use strict;
 use Carp;
 use File::Spec::Functions qw(splitpath catpath);
 use List::Util qw( first );
-use Text::Balanced qw(extract_quotelike extract_bracketed extract_multiple);
+use Text::Balanced qw(extract_bracketed extract_multiple);
 
 # Set some module variables
 my $has_run;

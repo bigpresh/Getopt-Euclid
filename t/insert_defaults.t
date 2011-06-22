@@ -18,8 +18,8 @@ sub lucky {
 use Getopt::Euclid;
 use Test::More 'no_plan';
 
-my $help =
-q{=head1 Usage:
+my $help = <<END;
+=head1 Usage:
 
        insert_defaults.t -o= <out_file> -i <file> [options]
        insert_defaults.t --help
@@ -87,7 +87,13 @@ Print the usual program information
 
 
 
-};
+END
+
+
+my $help_test = Getopt::Euclid->help();
+is $help_test, $help => 'Help has correct default values displayed';
+
+
 
 my $man =
 q{=head1 NAME
@@ -184,10 +190,6 @@ and/or modified under the terms of the Perl Artistic License
 
 my $man_test = Getopt::Euclid->man();
 is $man_test, $man  => 'Man has correct default values displayed';
-
-my $help_test = Getopt::Euclid->help();
-is $help_test, $help => 'Help has correct default values displayed';
-
 
 __END__
 
