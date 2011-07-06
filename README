@@ -45,6 +45,7 @@ DEPENDENCIES
 
 File::Spec::Functions
 List::Util
+Text::Balanced
 
 
 COPYRIGHT AND LICENCE

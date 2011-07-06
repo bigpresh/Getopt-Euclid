@@ -1,6 +1,7 @@
 Revision history for Getopt-Euclid
 
 git
+  - Added dependency Text::Balanced in README and Makefile.PL
   - Bugfix for #34200: variables in constraint specifications are now read as
     originating from the 'main' package namespace
   - Error messages for arguments that do not validate against the constraints
