@@ -7,6 +7,7 @@ WriteMakefile(
     AUTHOR              => 'Damian Conway <DCONWAY@cpan.org>',
     VERSION_FROM        => 'lib/Getopt/Euclid.pm',
     ABSTRACT_FROM       => 'lib/Getopt/Euclid.pm',
+    LICENSE             => 'perl',
     PL_FILES            => {},
     PREREQ_PM => {
         'Test::More'            => 0,

@@ -1,6 +1,7 @@
 Revision history for Getopt-Euclid
 
 git
+  - Bugfix 69105: file META.yml now states which license the module uses
   - Added dependency Text::Balanced in README and Makefile.PL
   - Bugfix for #34200: variables in constraint specifications are now read as
     originating from the 'main' package namespace
