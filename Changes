@@ -1,6 +1,8 @@
 Revision history for Getopt-Euclid
 
 git
+  - Little internal modification to prevent identical placeholders that are
+    present multiple times in the specification to be processed multiple times.
   - Bugfix 69105: file META.yml now states which license the module uses
   - Added dependency Text::Balanced in README and Makefile.PL
   - Bugfix for #34200: variables in constraint specifications are now read as

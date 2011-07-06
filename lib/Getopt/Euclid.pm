@@ -797,7 +797,6 @@ sub _verify_args {
     }
     undef %seen_vars;
 
-
     # Enforce constraints and fill in defaults...
   ARG:
     for my $arg_name ( keys %{$arg_specs_ref} ) {
@@ -808,8 +807,7 @@ sub _verify_args {
               && !$arg_specs_ref->{$arg_name}{has_defaults};
 
         # Ensure all vars exist within arg...
-        my @vars = @{ $arg_specs_ref->{$arg_name}{placeholders} || [] };
-
+        my @vars = keys %{$arg_specs_ref->{$arg_name}{placeholders}};
         for my $index ( 0 .. $#{ $ARGV{$arg_name} } ) {
             my $entry = $ARGV{$arg_name}[$index];
             @{$entry}{@vars} = @{$entry}{@vars};
@@ -884,6 +882,7 @@ sub _verify_args {
             }
         }
     }
+
 }
 
 
@@ -936,7 +935,7 @@ sub _convert_to_regex {
                    { my ($var_name, $var_rep) = ($1, $2);
                      $var_name =~ s/(\s+)\[\\s\\0\\1]\*/$1/gxms;
                      my $type = $arg->{var}{$var_name}{type} || q{};
-                     push @{$arg->{placeholders}}, $var_name;
+                     $arg->{placeholders}->{$var_name} = undef;
                      my $matcher = $type =~ m{\A\s*/.*/\s*\z}xms
                                         ? eval "qr$type"
                                         : $STD_MATCHER_FOR{ $type }
