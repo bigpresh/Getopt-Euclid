@@ -7,10 +7,11 @@ use strict;
 use Carp;
 use File::Spec::Functions qw(splitpath catpath);
 use List::Util qw( first );
-use Text::Balanced qw(extract_bracketed extract_multiple);
+use Text::Balanced qw(extract_bracketed extract_variable extract_multiple);
 
 # Set some module variables
-my $has_run;
+my $has_run = 0;
+my $constraints_processed = 0;
 my @pm_pods;
 my $minimal_keys;
 my $vars_prefix;
@@ -105,7 +106,6 @@ sub import {
 
     # Parse and export arguments 
     Getopt::Euclid->process_args( \@ARGV ) unless $defer;
-
 }
 
 
@@ -137,6 +137,8 @@ sub process_args {
     # Take a reference to an array of arguments (\@ARGV or other), parse the
     # arguments, and populate %ARGV (or export specific variable names)
     my ($self, $args) = @_;
+
+    _process_constraints() unless $constraints_processed;
 
     %ARGV = ();
 
@@ -269,7 +271,7 @@ sub process_args {
 
 }
 
-# ###### Utility subs #############
+# # # # # # # # Utility subs # # # # # # # #
 
 # Recursively remove decorations on %ARGV keys
 
@@ -561,10 +563,19 @@ sub _process_euclid_specs {
                 $arg->{var}{$var}{type_error} = $val;
             }
             elsif ( $field eq 'type' ) {
+
+                # Restore fully-qualified name to variables:
+                #    $x          becomes  $main::x
+                #    $::x        becomes  $main::x
+                #    $Package::x stays as $Package::x
+                $val =~ s/([\$\@\%])(::[a-z0-9]+)/$1main$2/gi;                
+                if ($val !~ m/::/) {
+                  $val =~ s/([\$\@\%])/$1main::/gi;
+                }
+
                 my ( $matchtype, $comma, $constraint ) =
                   $val =~ m{(/(?:\.|.)+/ | [^,\s]+)\s*(?:(,))?\s*(.*)}xms;
                 $arg->{var}{$var}{type} = $matchtype;
-
                 if ( $comma && length $constraint ) {
                     ( $arg->{var}{$var}{constraint_desc} = $constraint ) =~
                       s/\s*\b\Q$var\E\b\s*//g;
@@ -586,6 +597,7 @@ sub _process_euclid_specs {
                       : $STD_CONSTRAINT_FOR{$matchtype}
                       or _fail("Unknown .type constraint: $spec");
                 }
+
             }
             elsif ( $field eq 'default' ) {
                 eval "\$val = $val; 1"
@@ -637,6 +649,23 @@ sub _process_euclid_specs {
 
 }
 
+sub _process_constraints {
+    # In constraints that use a variable, replace the variable name by its value
+    for my $hash (\%requireds_hash, \%options_hash) {
+        while ( my ($entry, $props) = each %$hash ) {
+            while ( my ($var_name, $var_props) = each %{$props->{'var'}} ) {
+                my $constraint = $var_props->{'constraint_desc'};
+                next if not defined $constraint;
+                for my $var_name (extract_multiple($constraint,[sub{extract_variable($_[0],'')}],undef,1)) {
+                    my $var_val = eval $var_name;
+                    $var_name = quotemeta($var_name);
+                    $var_props->{'constraint_desc'} =~ s/$var_name/$var_val/;
+                }
+            }
+        }
+    }
+    $constraints_processed = 1;
+}
 
 sub _minimize_name {
     my ($name) = @_;
@@ -1722,6 +1751,27 @@ so it's important to qualify any subroutines that are not in that namespace.
 Furthermore, any subroutines used must be defined (or loaded from a module)
 I<before> the C<use Getopt::Euclid> statement.
 
+You can also use constraints that involve variables. You must use the :defer
+mode and the variables must be globally accessible:
+
+    use Getopt::Euclid qw(:defer);
+    our $MIN_VAL = 100;
+    Getopt::Euclid->process_args(\@ARGV);
+
+    __END__
+
+    =head1 OPTIONS
+
+    =over
+
+    =item --magnitude <magnitude>
+
+    =for Euclid
+       magnitude.type: number, magnitude > $MIN_VAL
+
+    =back
+
+
 =head2 Standard placeholder types
 
 Getopt::Euclid recognizes the following standard placeholder types:
@@ -2041,9 +2091,11 @@ you may need to examine C<@ARGV> before it is processed (and emptied) by
 Getopt::Euclid. Or you may intend to pass your own arguments manually only
 using C<process_args()>.
 
-To allow to defer the parsing of arguments, use the specifier C<':defer'>:
+To defer the parsing of arguments, use the specifier C<':defer'>:
 
     use Getopt::Euclid qw( :defer );
+    # Do something...
+    Getopt::Euclid->process_args(\@ARGV);
 
 =head1 DIAGNOSTICS
 

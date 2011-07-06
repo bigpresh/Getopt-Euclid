@@ -1,5 +1,11 @@
 Revision history for Getopt-Euclid
 
+git
+  - Bugfix for #34200: variables in constraint specifications are now read as
+    originating from the 'main' package namespace
+  - Error messages for arguments that do not validate against the constraints
+    now display the value of variables instead of their name.
+
 0.2.4
   - Default values can now be specified in the POD and displayed in the program
     documentation
