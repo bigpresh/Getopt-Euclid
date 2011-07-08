@@ -1358,7 +1358,53 @@ C<process_args()> subroutine.
 
 =head2 POD Interface
 
-This is where all the action is.
+This is where all the action is. POD markup can be inserted anywhere in the Perl
+code. Typically, it is added either after an __END__ statement like in the
+synopsis, or interspersed in the code:
+
+    use Getopt::Euclid;
+
+    =head1 NAME
+
+    yourprog - Your program here
+
+    =head1 REQUIRED ARGUMENTS
+
+    =over
+
+    =item  -s[ize]=<h>x<w>    
+
+    Specify size of simulation
+
+    =for Euclid:
+        h.type:    int > 0
+        h.default: 24
+        w.type:    int >= 10
+        w.default: 80
+
+    =back
+
+    =head1 OPTIONS
+
+    =over
+
+    =item  -i
+
+    Specify interactive simulation
+
+    =back
+
+    =cut
+
+    if ($ARGV{-i}) {
+        print "Interactive mode...\n";
+    }
+
+    for my $x (0..$ARGV{-size}{h}-1) {
+        for my $y (0..$ARGV{-size}{w}-1) {
+            do_something_with($x, $y);
+        }
+    }
 
 When Getopt::Euclid is loaded in a non-C<.pm> file, it searches that file for
 the following POD documentation:
