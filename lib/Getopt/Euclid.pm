@@ -2270,7 +2270,8 @@ Text::Balanced
 
 =head1 INCOMPATIBILITIES
 
-None reported.
+Getopt::Euclid may not work properly with POD in Perl files that have been
+converted into an executable with PerlApp or similar software.
 
 =head1 BUGS AND LIMITATIONS
 
