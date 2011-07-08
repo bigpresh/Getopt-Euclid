@@ -2262,6 +2262,10 @@ File::Spec::Functions
 
 List::Util
 
+=item *
+
+Text::Balanced
+
 =back
 
 =head1 INCOMPATIBILITIES
