@@ -162,6 +162,7 @@ sub process_args {
     }
 
     # Report problems in parsing...
+
     *_bad_arglist = sub {
         my (@msg) = @_;
         my $msg = join q{}, @msg;
@@ -172,6 +173,7 @@ sub process_args {
     };
 
     # Run matcher...
+
     my $all_args_ref = { %options_hash, %requireds_hash };
     my $argv = 
       join( q{ }, map { my $arg = $_; $arg =~ tr/ \t/\0\1/; $arg } @$args );
@@ -180,6 +182,7 @@ sub process_args {
     }
 
     # Check all requireds have been found...
+
     my @missing;
     for my $req ( keys %requireds_hash ) {
         push @missing, "\t$req\n" if !exists $ARGV{$req};
@@ -198,8 +201,8 @@ sub process_args {
 
     _verify_args($all_args_ref);
 
-    # Clean up @$args ... everything must have been parsed, so nothing left
-
+    # Clean up @$args since everything must have been parsed
+ 
     @$args = ();
 
     # Clean up %ARGV
@@ -1147,7 +1150,7 @@ Getopt::Euclid - Executable Uniform Command-Line Interface Descriptions
 
 =head1 VERSION
 
-This document describes Getopt::Euclid version 0.2.3
+This document describes Getopt::Euclid version 0.2.4
 
 =head1 SYNOPSIS
 
