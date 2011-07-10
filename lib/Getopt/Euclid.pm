@@ -5,9 +5,11 @@ use version; $VERSION = qv('0.2.4');
 use warnings;
 use strict;
 use Carp;
-use File::Spec::Functions qw(splitpath catpath);
+use File::Basename;
+use File::Spec::Functions qw(splitpath catpath catfile);
 use List::Util qw( first );
 use Text::Balanced qw(extract_bracketed extract_variable extract_multiple);
+
 
 # Set some module variables
 my $has_run = 0;
@@ -312,10 +314,9 @@ sub _process_pod {
 
 
 sub _process_prog_pod {
+
     # Acquire POD source...
-    open my $fh, '<', $0
-      or croak "Getopt::Euclid was unable to access POD\n($!)\nProblem was";
-    my $source = do { local $/; <$fh> };
+    my $source = _get_pod( $0 );
 
     # Set up parsing rules...
     my $HWS     = qr{ [^\S\n]*      }xms;
@@ -362,7 +363,7 @@ sub _process_prog_pod {
         $pod =~ s{ <          $POD_CMD .*? $POD_CMD .*?  >  }{<>}gxms;
 
         # Extract POD alone...
-        $pod = join "\n\n", $pod =~ m{ $POD_CMD .*? (?: $POD_CUT | \z ) }gxms;      
+        $pod = join "\n\n", $pod =~ m{ $POD_CMD .*? (?: $POD_CUT | \z ) }gxms;
 
         # Append to man
         push @pod_array, $pod if not $pod eq '';
@@ -1091,10 +1092,7 @@ sub _fail {
 sub _process_pm_pod {
     my @caller = caller(2); # at import()'s level
 
-    # Save module's POD...
-    open my $fh, '<', $caller[1]
-      or croak "Getopt::Euclid was unable to access POD\n($!)\nProblem was";
-    push @pm_pods, do { local $/; <$fh> };
+    push @pm_pods, _get_pod($caller[1]);
 
     # Install this import() sub as module's import sub...
     no strict 'refs';
@@ -1106,6 +1104,29 @@ sub _process_pm_pod {
       = bless sub { $lambda = 1; goto &Getopt::Euclid::import },
       'Getopt::Euclid::Importer';
 
+}
+
+
+sub _get_pod {
+    # Extract source from a Perl script (.pl) or module (.pm), including content
+    # from corresponding .pod files if needed
+    my $perl_file = shift; # e.g. a .pl, .pm or .t file
+
+    my ($name, $path, $suffix) = fileparse($perl_file, qr/\.[^.]*/);
+    my $pod_file = catfile( $path, $name.'.pod' );
+    $pod_file =~ s/\..*?$/.pod/i; # the corresponding .pod file
+    my @files = ($perl_file);
+    push @files, $pod_file if ( -e $pod_file );
+    
+    # Get POD...
+    my $pod_string;
+    for my $file ( @files ) {
+        open my $fh, '<', $file
+          or croak "Getopt::Euclid could not read file '$file'\n($!)\nProblem was";
+        $pod_string .= do { local $/; <$fh> };
+        close $fh;
+    }
+    return $pod_string;
 }
 
 
@@ -1360,7 +1381,7 @@ C<process_args()> subroutine.
 
 This is where all the action is. POD markup can be inserted anywhere in the Perl
 code. Typically, it is added either after an __END__ statement like in the
-synopsis, or interspersed in the code:
+synopsis, interspersed in the code, or in a .pod file with the same file prefix:
 
     use Getopt::Euclid;
 
@@ -2302,6 +2323,10 @@ Getopt::Euclid requires no configuration files or environment variables.
 
 =item *
 
+File::Basename
+
+=item *
+
 File::Spec::Functions
 
 =item *
@@ -2317,7 +2342,8 @@ Text::Balanced
 =head1 INCOMPATIBILITIES
 
 Getopt::Euclid may not work properly with POD in Perl files that have been
-converted into an executable with PerlApp or similar software.
+converted into an executable with PerlApp or similar software. A possible
+workaround may be to move the POD to a __DATA__ section or a separate .pod file.
 
 =head1 BUGS AND LIMITATIONS
 

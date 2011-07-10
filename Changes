@@ -1,6 +1,7 @@
 Revision history for Getopt-Euclid
 
 git
+  - Bugfix for #29301: now looking for POD located into .pod files
   - Little internal modification to prevent identical placeholders that are
     present multiple times in the specification to be processed multiple times.
   - Bugfix 69105: file META.yml now states which license the module uses
