@@ -9,7 +9,8 @@ use File::Basename;
 use File::Spec::Functions qw(splitpath catpath catfile);
 use List::Util qw( first );
 use Text::Balanced qw(extract_bracketed extract_variable extract_multiple);
-
+use Getopt::Euclid::PodExtract;
+use Perl::Tidy;
 
 # Set some module variables
 my $has_run = 0;
@@ -314,10 +315,6 @@ sub _process_pod {
 
 
 sub _process_prog_pod {
-
-    # Acquire POD source...
-    my $source = _get_pod( $0 );
-
     # Set up parsing rules...
     my $HWS     = qr{ [^\S\n]*      }xms;
     my $EOHEAD  = qr{ (?= ^=head1 | \z)  }xms;
@@ -344,33 +341,16 @@ sub _process_prog_pod {
                         )
                     }xms;
 
-    my @pod_array = ();
-    for my $pod ( $source, reverse @pm_pods ) {
+    # Acquire POD source...
+    my $source = $0;
+    $man = _get_pod( $source, reverse @pm_pods );
 
-        # Clean up line delimeters
-        $pod =~ s{ [\n\r] }{\n}gx;
+    # Clean up line delimeters
+    $man =~ s{ [\n\r] }{\n}gx;
 
-        # Clean up significant entities...
-        $pod =~ s{ E<lt> }{<}gxms;
-        $pod =~ s{ E<gt> }{>}gxms;
-
-        # Sanitize PODs by removing rogue strings that contain POD text
-        $pod =~ s{ <<(\S+).*? $POD_CMD .*? $POD_CMD .*? ^\1 }{<<$1;\n$1}gxms; # heredocs
-        $pod =~ s{ (['"`])    $POD_CMD .*? $POD_CMD .*?  \1 }{$1$1}gxms;      # quoted
-        $pod =~ s{ \(         $POD_CMD .*? $POD_CMD .*?  \) }{()}gxms;        # bracketed
-        $pod =~ s{ \{         $POD_CMD .*? $POD_CMD .*?  \} }{{}}gxms;
-        $pod =~ s{ \[         $POD_CMD .*? $POD_CMD .*?  \] }{[]}gxms;
-        $pod =~ s{ <          $POD_CMD .*? $POD_CMD .*?  >  }{<>}gxms;
-
-        # Extract POD alone...
-        $pod = join "\n\n", $pod =~ m{ $POD_CMD .*? (?: $POD_CUT | \z ) }gxms;
-
-        # Append to man
-        push @pod_array, $pod if not $pod eq '';
-
-    }
-
-    $man = join("\n=cut\n\n", @pod_array);
+    # Clean up significant entities...
+    $man =~ s{ E<lt> }{<}gxms;
+    $man =~ s{ E<gt> }{>}gxms;
 
     # Put program name in man
     ($SCRIPT_NAME) = ( splitpath($0) )[-1];
@@ -1092,7 +1072,7 @@ sub _fail {
 sub _process_pm_pod {
     my @caller = caller(2); # at import()'s level
 
-    push @pm_pods, _get_pod($caller[1]);
+    push @pm_pods, $caller[1];
 
     # Install this import() sub as module's import sub...
     no strict 'refs';
@@ -1110,22 +1090,30 @@ sub _process_pm_pod {
 sub _get_pod {
     # Extract source from a Perl script (.pl) or module (.pm), including content
     # from corresponding .pod files if needed
-    my $perl_file = shift; # e.g. a .pl, .pm or .t file
+    my (@perl_files) = @_;  # e.g. .pl, .pm or .t files
 
-    my ($name, $path, $suffix) = fileparse($perl_file, qr/\.[^.]*/);
-    my $pod_file = catfile( $path, $name.'.pod' );
-    $pod_file =~ s/\..*?$/.pod/i; # the corresponding .pod file
-    my @files = ($perl_file);
-    push @files, $pod_file if ( -e $pod_file );
+    my $pod_string = '';
+    my $pod_extracter = Getopt::Euclid::PodExtract->new(\$pod_string);
+    for my $perl_file (@perl_files) {
+
+        # Get corresponding .pod file
+        my ($name, $path, $suffix) = fileparse($perl_file, qr/\.[^.]*/);
+        my $pod_file = catfile( $path, $name.'.pod' );
+        $pod_file =~ s/\..*?$/.pod/i; # the corresponding .pod file
+        my @in_files = ($perl_file);
+        push @in_files, $pod_file if ( -e $pod_file );
     
-    # Get POD...
-    my $pod_string;
-    for my $file ( @files ) {
-        open my $fh, '<', $file
-          or croak "Getopt::Euclid could not read file '$file'\n($!)\nProblem was";
-        $pod_string .= do { local $/; <$fh> };
-        close $fh;
+        # Extract POD...
+        for my $in_file (@in_files) {
+            Perl::Tidy::perltidy(
+              argv        =>  [], # explicitly use no args to prevent use of @ARGV
+              source      =>  $in_file,
+              formatter   =>  $pod_extracter,
+            );
+            $pod_string .= "\n" if $pod_string;
+        }
     }
+
     return $pod_string;
 }
 
@@ -2336,6 +2324,10 @@ List::Util
 =item *
 
 Text::Balanced
+
+=item *
+
+Perl::Tidy
 
 =back
 

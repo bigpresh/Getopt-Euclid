@@ -16,6 +16,7 @@ WriteMakefile(
         'File::Spec::Functions' => 0,
         'List::Util'            => 0,
         'Text::Balanced'        => 0,
+        'Perl::Tidy'            => 0,
     },
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
     clean               => { FILES => 'Getopt-Euclid-*' },

@@ -47,6 +47,7 @@ File::Basename
 File::Spec::Functions
 List::Util
 Text::Balanced
+Perl::Tidy
 
 
 COPYRIGHT AND LICENCE
