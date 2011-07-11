@@ -1,6 +1,6 @@
 package Getopt::Euclid;
 
-use version; $VERSION = qv('0.2.4');
+use version; $VERSION = qv('0.2.5');
 
 use warnings;
 use strict;
@@ -164,7 +164,7 @@ sub process_args {
         exit;
     }
 
-    # Report problems in parsing...
+    # Subroutine to report problems during parsing...
 
     *_bad_arglist = sub {
         my (@msg) = @_;
@@ -1159,7 +1159,7 @@ Getopt::Euclid - Executable Uniform Command-Line Interface Descriptions
 
 =head1 VERSION
 
-This document describes Getopt::Euclid version 0.2.4
+This document describes Getopt::Euclid version 0.2.5
 
 =head1 SYNOPSIS
 
@@ -1258,8 +1258,8 @@ This document describes Getopt::Euclid version 0.2.4
     This module is free software. It may be used, redistributed
     and/or modified under the terms of the Perl Artistic License
     (see http://www.perl.com/perl/misc/Artistic.html)
-  
-  
+
+
 =head1 DESCRIPTION
 
 Getopt::Euclid uses your program's own documentation to create a command-line
@@ -1446,7 +1446,7 @@ allowing for multi-level and "alpha" version numbers such as:
     =head1 VERSION
     
     This is version 1.2.3
-    
+
 or:
 
     =head1 VERSION
@@ -1562,7 +1562,7 @@ Any of the above variations would cause all three of:
     $ARGV{'-i'}
     $ARGV{'-in'}
     $ARGV{'--from'}
-    
+
 to be set to the string C<'data.txt'>.
 
 You could allow the optional C<=> to also be an optional colon by specifying:
@@ -2342,6 +2342,11 @@ workaround may be to move the POD to a __DATA__ section or a separate .pod file.
 Please report any bugs or feature requests to
 C<bug-getopt-euclid@rt.cpan.org>, or through the web interface at
 L<http://rt.cpan.org>.
+
+Getopt::Euclid has a development repository on Sourceforge.net at
+L<http://sourceforge.net/scm/?type=git&group_id=259291> in which the code is
+managed by Git (L<git://getopt-euclid.git.sourceforge.net/gitroot/getopt-euclid/getopt-euclid>).
+Feel free to clone this repository and push patches!
 
 =head1 AUTHOR
 
