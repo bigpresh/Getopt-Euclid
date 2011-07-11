@@ -2016,7 +2016,7 @@ as a cuddled version of:
 
 By default, the module only stores arguments into the global %ARGV hash.
 You can request that options are exported as variables into the calling package
-the special C<':vars'> specifier:
+using the special C<':vars'> specifier:
 
     use Getopt::Euclid qw( :vars );
 
