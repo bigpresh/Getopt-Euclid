@@ -1099,7 +1099,6 @@ sub _get_pod {
         # Get corresponding .pod file
         my ($name, $path, $suffix) = fileparse($perl_file, qr/\.[^.]*/);
         my $pod_file = catfile( $path, $name.'.pod' );
-        $pod_file =~ s/\..*?$/.pod/i; # the corresponding .pod file
         my @in_files = ($perl_file);
         push @in_files, $pod_file if ( -e $pod_file );
     
