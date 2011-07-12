@@ -1367,9 +1367,10 @@ C<process_args()> subroutine.
 
 =head2 POD Interface
 
-This is where all the action is. POD markup can be inserted anywhere in the Perl
-code. Typically, it is added either after an __END__ statement like in the
-synopsis, interspersed in the code, or in a .pod file with the same file prefix:
+This is where all the action is. POD markup can be placed in a .pod file that
+has the same prefix as the corresponding Perl file. Alternatively, POD can be
+inserted anywhere in the Perl code, but is typically added either after an
+__END__ statement (like in the L<SYNOPSIS>), or interspersed in the code:
 
     use Getopt::Euclid;
 
@@ -2345,8 +2346,10 @@ L<http://rt.cpan.org>.
 
 Getopt::Euclid has a development repository on Sourceforge.net at
 L<http://sourceforge.net/scm/?type=git&group_id=259291> in which the code is
-managed by Git (L<git://getopt-euclid.git.sourceforge.net/gitroot/getopt-euclid/getopt-euclid>).
-Feel free to clone this repository and push patches!
+managed by Git. Feel free to clone this repository and push patches! To get started:
+  git clone L<git://getopt-euclid.git.sourceforge.net/gitroot/getopt-euclid/getopt-euclid>)
+  git branch 0.2.x origin/0.2.x
+  git checkout 0.2.x
 
 =head1 AUTHOR
 
