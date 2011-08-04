@@ -325,11 +325,11 @@ sub _process_prog_pod {
     my $VERS  = qr{ $HWS VERSION $HWS \n }xms;
     my $USAGE = qr{ $HWS USAGE   $HWS \n }xms;
 
-    my $STD = qr{ STANDARD | STD  }xms;
-    my $ARG = qr{ $HWS ARG(?:UMENT)?S? }xms;
+    my $STD = qr{ STANDARD | STD | PROGRAM | SCRIPT | CLI  | COMMAND(?:-|\s)?LINE }xms;
+    my $ARG = qr{ $HWS (?:PARAM(?:ETER)?|ARG(?:UMENT)?)S? }xms;
 
-    my $OPTIONS  = qr{ $HWS $STD? $HWS OPTION(?:AL|S)? $ARG? $HWS \n }xms;
-    my $REQUIRED = qr{ $HWS $STD? $HWS REQUIRED        $ARG? $HWS \n }xms;
+    my $OPTIONS  = qr{ $HWS $STD? $HWS OPTION(?:AL|S)?        $ARG? $HWS \n }xms;
+    my $REQUIRED = qr{ $HWS $STD? $HWS (?:REQUIRED|MANDATORY) $ARG? $HWS \n }xms;
 
     my $EUCLID_ARG = qr{ ^=item \s* ([^\n]*?) \s* \n\s*\n
                         (
@@ -1470,7 +1470,7 @@ See L<Specifying arguments> for details of the specification syntax.
 
 The actual headings that Getopt::Euclid can recognize here are:
 
-    =head1 [STD|STANDARD] REQUIRED [ARG|ARGUMENT][S]
+    =head1 [STANDARD|STD|PROGRAM|SCRIPT|CLI|COMMAND[-| ]LINE] [REQUIRED|MANDATORY] [PARAM|PARAMETER|ARG|ARGUMENT][S]
 
 =item =head1 OPTIONS
 
@@ -1484,7 +1484,7 @@ but there is no requirement that it supply both, or either.
 
 The actual headings that Getopt::Euclid recognizes here are:
 
-    =head1 [STD|STANDARD] OPTION[AL|S] [ARG|ARGUMENT][S]
+    =head1 [STANDARD|STD|PROGRAM|SCRIPT|CLI|COMMAND[-| ]LINE] OPTION[AL|S] [PARAM|PARAMETER|ARG|ARGUMENT][S]
 
 =item =head1 COPYRIGHT
 

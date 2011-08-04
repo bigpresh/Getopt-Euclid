@@ -1,5 +1,10 @@
 Revision history for Getopt-Euclid
 
+0.2.x
+  - Extended the grammar of recognized POD headers for required and optional arguments:
+    [STANDARD|STD|PROGRAM|SCRIPT|CLI|COMMAND[-| ]LINE] [REQUIRED|MANDATORY] [PARAM|PARAMETER|ARG|ARGUMENT][S]
+    [STANDARD|STD|PROGRAM|SCRIPT|CLI|COMMAND[-| ]LINE]      OPTION[AL|S]    [PARAM|PARAMETER|ARG|ARGUMENT][S]
+
 0.2.7
   - Updated dependencies in Build.PL module
 
