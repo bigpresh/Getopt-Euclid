@@ -1222,7 +1222,7 @@ This document describes Getopt::Euclid version 0.2.7
 
     =item  -l[[en][gth]] <l>
 
-    Length of simulation [default: 99]
+    Length of simulation. The default is l.default
 
     =for Euclid:
         l.type:    int > 0
