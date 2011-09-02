@@ -1,5 +1,6 @@
-*META.yml
+*META.*
 Build
+_build
 Makefile
 Makefile.old
 cover_db
