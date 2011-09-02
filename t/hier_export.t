@@ -19,7 +19,7 @@ BEGIN {
 }
 
 # test that args to import are passed through to Getopt::Euclid
-use Getopt::Euclid::HierDemo qw( :vars );
+use t::lib::HierDemo qw( :vars );
 
 use Test::More 'no_plan';
 
