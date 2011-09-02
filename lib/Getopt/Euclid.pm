@@ -529,7 +529,6 @@ sub _process_euclid_specs {
             $arg->{false_vals} = '(?:' . join( '|', @false_vals ) . ')';
         }
 
-
         while (
             $info =~ m{\G \s* (([^.]+)\.([^:=\s]+) \s*[:=]\s* ([^\n]*)) }gcxms )
         {
@@ -537,9 +536,8 @@ sub _process_euclid_specs {
 
             # Check for misplaced fields...
             if ( $arg->{name} !~ m{\Q<$var>}xms ) {
-                _fail(
-"Invalid constraint: $spec\n(No <$var> placeholder in argument: $arg->{name})"
-                );
+                _fail( "Invalid constraint: $spec\n(No <$var> placeholder in ".
+                    "argument: $arg->{name})" );
             }
 
             # Decode...
@@ -583,13 +581,22 @@ sub _process_euclid_specs {
                 }
 
             }
-            elsif ( $field eq 'default' ) {
+            elsif ( ($field eq 'default') || ($field eq 'opt_default') ) {
                 eval "\$val = $val; 1"
-                  or _fail("Invalid .default value: $spec\n($@)");
-                $arg->{var}{$var}{default} = $val;
-                $arg->{has_defaults} = exists $arg->{has_defaults} ?
-                                      $arg->{has_defaults}++ :
+                  or _fail("Invalid .$field value: $spec\n($@)");
+                $arg->{var}{$var}{$field} = $val;
+                my $has_field = 'has_'.$field;
+                $arg->{$has_field} = exists $arg->{$has_field} ?
+                                      $arg->{$has_field}++ :
                                       1;
+                # Optional defaults need optional placeholders
+                if ($field eq 'opt_default') {
+                    if ( $arg->{name} !~ m{\Q[<$var>]}xms ) {
+                       _fail( "Invalid .opt_default constraint: $spec\n(Placeholder".
+                           " <$var> has to be optional, i.e. [<$var>], to have ".
+                           "an optional default in argument: $arg->{name})" );
+                    }
+                }
             }
             elsif ( $field eq 'excludes.error' ) {
                 $arg->{var}{$var}{excludes_error} = $val;
@@ -599,7 +606,7 @@ sub _process_euclid_specs {
                 for my $excl_var (@{$arg->{var}{$var}{excludes}}) {
                     if ($var eq $excl_var) {
                         _fail( "Invalid .excludes value for variable <$var>: ".
-                            "<$excl_var> cannot exclude itself\n" );
+                            "<$excl_var> cannot exclude itself." );
                     }
                     $excluded_by{$excl_var} = $var;
                 }
@@ -770,9 +777,15 @@ sub _verify_args {
             for my $excl_var ( @{$var->{excluded_by}}, @{$var->{excludes}} ) {
                 if (exists $seen_vars{$excl_var}) {
                     delete $arg_specs_ref->{$arg_name}{var}{$var_name}{default};
-                    $arg_specs_ref->{$arg_name}{has_defaults}--;
-                    if ($arg_specs_ref->{$arg_name}{has_defaults} == 0) {
-                        delete $arg_specs_ref->{$arg_name}{has_defaults};
+                    $arg_specs_ref->{$arg_name}{has_default}--;
+                    delete $arg_specs_ref->{$arg_name}{var}{$var_name}{opt_default};
+                    $arg_specs_ref->{$arg_name}{has_opt_default}--;
+                   
+                    if ($arg_specs_ref->{$arg_name}{has_default} == 0) {
+                        delete $arg_specs_ref->{$arg_name}{has_default};
+                    }
+                    if ($arg_specs_ref->{$arg_name}{has_opt_default} == 0) {
+                        delete $arg_specs_ref->{$arg_name}{has_opt_default};
                     }
                 }
             }
@@ -785,10 +798,11 @@ sub _verify_args {
   ARG:
     for my $arg_name ( keys %{$arg_specs_ref} ) {
 
-        # Skip non-existent/non-defaulting arguments
+        # Skip non-existent/non-defaulting/non-optional-defaulting arguments
         next ARG
           if !exists $ARGV{$arg_name}
-              && !$arg_specs_ref->{$arg_name}{has_defaults};
+              && !(   $arg_specs_ref->{$arg_name}{has_default}
+                   || $arg_specs_ref->{$arg_name}{has_opt_default} );
 
         # Ensure all vars exist within arg...
         my @vars = keys %{$arg_specs_ref->{$arg_name}{placeholders}};
@@ -846,10 +860,12 @@ sub _verify_args {
 
                 # Assign placeholder defaults (if necessary)...
                 next ARG
-                  if !exists $arg_specs_ref->{$arg_name}{var}{$var}{default};
+                  if   !exists $arg_specs_ref->{$arg_name}{var}{$var}{default}
+                    && !exists $arg_specs_ref->{$arg_name}{var}{$var}{opt_default};
 
-                $entry->{$var} =
-                  $arg_specs_ref->{$arg_name}{var}{$var}{default};
+                $entry->{$var} = exists $arg_specs_ref->{$arg_name}{var}{$var}{opt_default} ?
+                                 $arg_specs_ref->{$arg_name}{var}{$var}{opt_default} :
+                                 $arg_specs_ref->{$arg_name}{var}{$var}{default};
             }
         }
 
@@ -894,7 +910,7 @@ sub _convert_to_regex {
         push @arg_variants, @{$args_ref->{$arg_name}->{variants}};
     }
     my $no_match = join('|',@arg_variants);
-    $no_match =~ s{([@#$^*()+{}?])}{\\$1}gxms; # Quotemeta specials
+####    $no_match =~ s{([@#$^*()+{}?])}{\\$1}gxms; # Quotemeta specials 
     $no_match = '(?!'.$no_match.')';
 
 
@@ -903,7 +919,7 @@ sub _convert_to_regex {
         my $regex = $arg_name;
 
         # Quotemeta specials...
-        $regex =~ s{([@#$^*()+{}?])}{\\$1}gxms;
+####        $regex =~ s{([@#$^*()+{}?])}{\\$1}gxms;
 
         $regex = "(?:$regex)";
 
@@ -1129,19 +1145,21 @@ sub _insert_default_values {
         for my $var_name (@var_names) {
             # Get default for this variable
             my $var = $args->{$item_name}->{var}->{$var_name};
-            my $var_default;
-            if (exists $var->{default}) {
-                if (ref($var->{default}) eq 'ARRAY') {
-                    $var_default = join(' ', @{$var->{default}});
-                } elsif (ref($var->{default}) eq '') {
-                    $var_default = $var->{default};
+            for my $default_type ( 'default', 'opt_default' ) {
+                my $var_default;
+                if (exists $var->{$default_type}) {
+                    if (ref($var->{$default_type}) eq 'ARRAY') {
+                        $var_default = join(' ', @{$var->{$default_type}});
+                    } elsif (ref($var->{$default_type}) eq '') {
+                        $var_default = $var->{$default_type};
+                    } else {
+                        carp "Getopt::Euclid found an unexpected default value type";
+                    }
                 } else {
-                    carp "Getopt::Euclid found an unexpected default value type";
+                    $var_default = 'none';
                 }
-            } else {
-                $var_default = 'none';
+                $item_spec =~ s/$var_name\.$default_type/$var_default/g;
             }
-            $item_spec =~ s/$var_name\.default/$var_default/g;
         }
         $pod_string .= $item_spec;
     }
@@ -1227,6 +1245,16 @@ This document describes Getopt::Euclid version 0.2.7
     =for Euclid:
         l.type:    int > 0
         l.default: 99
+
+    =item --debug [<log_level>]
+
+    Set the log level. Default is log_level.default but if you provide --debug,
+    then it is log_level.opt_default.
+
+    =for Euclid:
+        log_level.type:        int
+        log_level.default:     0
+        log_level.opt_default: 1
 
     =item --version
 
@@ -1894,7 +1922,6 @@ placeholder's value (just as in the type test itself).
 You can also specify a default value for any placeholders that aren't
 given values on the command-line (either because their argument isn't
 provided at all, or because the placeholder is optional within the argument).
-
 For example:
 
     =item -size <h>[x<w>]
@@ -1909,11 +1936,32 @@ This ensures that if no C<< <w> >> value is supplied:
 
     -size 20
 
-then C<$ARGV{'-size'}{'w'}> is set to 80.
+then C<$ARGV{'-size'}{'w'}> is set to 80. Likewise, of the C<-size> argument is
+omitted entirely, both C<$ARGV{'-size'}{'h'}> and C<$ARGV{'-size'}{'w'}> are set
+to their respective default values
 
-Likewise, of the C<-size> argument is omitted entirely, both
-C<$ARGV{'-size'}{'h'}> and C<$ARGV{'-size'}{'w'}> are set to their
-respective default values.
+However, Getopt::Euclid also supports a second type of default, optional defaults,
+that apply only to optional placeholders.
+
+For example:
+
+    =item --debug [<log_level>]
+
+    Set the log level
+
+    =for Euclid:
+        log_level.type:        int
+        log_level.default:     0
+        log_level.opt_default: 1
+
+This ensures that if the option C<< --debug >> is not specified, then
+C<$ARGV{'--debug'}> is set to 0, the regular default. But if no C<< <log_level> >>
+value is supplied:
+
+    --debug
+    
+then C<$ARGV{'--debug'}> is set to 1, the optional default.
+
 
 The default value can be any valid Perl compile-time expression:
 
@@ -2226,6 +2274,28 @@ instead of:
 
     =for Euclid
         curse.default: '*$@!&'
+
+=item Invalid .opt_default value: %s
+
+Same as previous diagnostic, but for optional defaults.
+
+=item Invalid .opt_default constraint
+
+You specified an optional default but the placeholder that it affects is not an
+optional optional placeholder, i.e. an optional default has no effect on it. For
+example:
+
+    =item  -l[[en][gth]] <l>
+
+    =for Euclid:
+        l.opt_default: 123
+
+instead of:
+
+    =item  -l[[en][gth]] [<l>]
+
+    =for Euclid:
+        l.opt_default: 123
 
 =item Invalid .excludes value for variable %s: <%s> does not exist
 

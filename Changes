@@ -1,6 +1,7 @@
 Revision history for Getopt-Euclid
 
 0.2.x
+  - Support for optional defaults (RT bug #61438, patch from Paolo Medeo)
   - Extended the grammar of recognized POD headers for required and optional arguments:
     [STANDARD|STD|PROGRAM|SCRIPT|CLI|COMMAND[-| ]LINE] [REQUIRED|MANDATORY] [PARAM|PARAMETER|ARG|ARGUMENT][S]
     [STANDARD|STD|PROGRAM|SCRIPT|CLI|COMMAND[-| ]LINE]      OPTION[AL|S]    [PARAM|PARAMETER|ARG|ARGUMENT][S]
