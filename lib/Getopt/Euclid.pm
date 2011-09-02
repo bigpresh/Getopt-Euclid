@@ -171,7 +171,8 @@ sub process_args {
         my $msg = join q{}, @msg;
         $msg =~ tr/\0\1/ \t/;
         $msg =~ s/\n?\z/\n/xms;
-        warn "$msg(Try: $SCRIPT_NAME --help)\n\n";
+        warn "$msg(Try this for usage help : $SCRIPT_NAME --help)\n".
+                 "(Try this for full manual: $SCRIPT_NAME --man )\n\n";
         exit 2;    # Traditional "bad arg list" value
     };
 
