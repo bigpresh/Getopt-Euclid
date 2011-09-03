@@ -1904,6 +1904,9 @@ Getopt::Euclid recognizes the following standard placeholder types:
                     matching the specified
                     pattern
 
+Since regular expressions are supported, you can easily match many more types
+of placeholders by using the prebuilt regular expressions available in Regexp::Common. 
+
 =head2 Placeholder type errors
 
 If a command-line argument's placeholder value doesn't satisify the specified
