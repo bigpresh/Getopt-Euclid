@@ -1638,7 +1638,7 @@ an array reference with each array entry being a hash reference.
 
 =head2 Boolean arguments
 
-If an argument has no placeholders it is treated as a boolean switch and it's
+If an argument has no placeholders it is treated as a boolean switch and its
 entry in C<%ARGV> will be true if the argument appeared in C<@ARGV>.
 
 For a boolean argument, you can also specify variations that are I<false>, if
