@@ -1,6 +1,6 @@
 package Getopt::Euclid;
 
-use version; $VERSION = qv('0.2.8');
+use version; $VERSION = qv('0.2.9');
 
 use warnings;
 use strict;
@@ -1175,7 +1175,7 @@ Getopt::Euclid - Executable Uniform Command-Line Interface Descriptions
 
 =head1 VERSION
 
-This document describes Getopt::Euclid version 0.2.8
+This document describes Getopt::Euclid version 0.2.9
 
 =head1 SYNOPSIS
 
