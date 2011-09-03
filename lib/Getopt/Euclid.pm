@@ -315,21 +315,21 @@ sub _process_pod {
 
 sub _process_prog_pod {
     # Set up parsing rules...
-    my $HWS        = qr{ [^\S\n]*               }xms;
+    my $SPACE      = qr{ [^\S\n]*               }xms;
     my $HEAD_START = qr{ ^=head[1-4]            }xms;
     my $HEAD_END   = qr{ (?= $HEAD_START | \z)  }xms;
     my $POD_CMD    = qr{            = [^\W\d]\w+ [^\n]* (?= \n\n )}xms;
-    my $POD_CUT    = qr{ (?! \n\n ) = cut $HWS          (?= \n\n )}xms;
+    my $POD_CUT    = qr{ (?! \n\n ) = cut $SPACE        (?= \n\n )}xms;
 
-    my $NAME  = qr{ $HWS NAME    $HWS \n }xms;
-    my $VERS  = qr{ $HWS VERSION $HWS \n }xms;
-    my $USAGE = qr{ $HWS USAGE   $HWS \n }xms;
+    my $NAME  = qr{ $SPACE NAME    $SPACE \n }xms;
+    my $VERS  = qr{ $SPACE VERSION $SPACE \n }xms;
+    my $USAGE = qr{ $SPACE USAGE   $SPACE \n }xms;
 
     my $STD = qr{ STANDARD | STD | PROGRAM | SCRIPT | CLI  | COMMAND(?:-|\s)?LINE }xms;
-    my $ARG = qr{ $HWS (?:PARAM(?:ETER)?|ARG(?:UMENT)?)S? }xms;
+    my $ARG = qr{ $SPACE (?:PARAM(?:ETER)?|ARG(?:UMENT)?)S? }xms;
 
-    my $OPTIONS  = qr{ $HWS $STD? $HWS OPTION(?:AL|S)?        $ARG? $HWS \n }xms;
-    my $REQUIRED = qr{ $HWS $STD? $HWS (?:REQUIRED|MANDATORY) $ARG? $HWS \n }xms;
+    my $OPTIONS  = qr{ $SPACE $STD? $SPACE OPTION(?:AL|S)?        $ARG? $SPACE \n }xms;
+    my $REQUIRED = qr{ $SPACE $STD? $SPACE (?:REQUIRED|MANDATORY) $ARG? $SPACE \n }xms;
 
     my $EUCLID_ARG = qr{ ^=item \s* ([^\n]*?) \s* \n\s*\n
                         (
@@ -342,14 +342,10 @@ sub _process_prog_pod {
                     }xms;
 
     # Acquire POD source...
-    my $source = $0;
-    if ( -e $source ) {
-        # When calling perl -e '...', $0 is '-e', i.e. not a actual file
-        push @pods, $source;
-    }
+    push @pods, $0 if (-e $0); # When calling perl -e '...', $0 is '-e', i.e. not a actual file
     $man = _get_pod( reverse @pods );
 
-    # Clean up line delimeters
+    # Clean up line delimiters
     $man =~ s{ [\n\r] }{\n}gx;
 
     # Clean up significant entities...
@@ -357,7 +353,7 @@ sub _process_prog_pod {
     $man =~ s{ E<gt> }{>}gxms;
 
     # Put program name in man
-    ($SCRIPT_NAME) = ( splitpath($0) )[-1];
+    $SCRIPT_NAME = (-e $0) ? (splitpath $0)[-1] : 'unknown';
     $man =~ s{ ($HEAD_START $NAME \s*) .*? (- .*)? $HEAD_END }
              {join(' ', $1, $SCRIPT_NAME, $2 || "\n\n" )}xems;
 
@@ -368,14 +364,7 @@ sub _process_prog_pod {
         $SCRIPT_VERSION = $main::VERSION;
     }
     if ( !defined $SCRIPT_VERSION ) {
-        my @stat = stat $0;
-        my $filedate;
-        if (scalar @stat == 0) {
-           $filedate = 'unknown';
-        } else { 
-           $filedate = localtime $stat[9];
-        }
-        $SCRIPT_VERSION = $filedate;
+        $SCRIPT_VERSION = (-e $0) ? localtime((stat $0)[9]) : 'unknown';
     }
     $man =~ s{ ($HEAD_START $VERS    \s*) .*? (\s*) $HEAD_END }
              {$1 This document refers to $SCRIPT_NAME version $SCRIPT_VERSION $2}xms;
@@ -1212,11 +1201,13 @@ This document describes Getopt::Euclid version 0.2.8
 
     This documentation refers to yourprog version 1.9.4
 
-    =head1 USAGE
+    =head1 COMMAND-LINE INTERFACE
+
+    =head2 USAGE
 
         yourprog [options]  -s[ize]=<h>x<w>  -o[ut][file] <file>
 
-    =head1 REQUIRED ARGUMENTS
+    =head2 REQUIRED ARGUMENTS
 
     =over
 
@@ -1240,7 +1231,7 @@ This document describes Getopt::Euclid version 0.2.8
 
     =back
 
-    =head1 OPTIONS
+    =head2 OPTIONS
 
     =over
 
@@ -1325,7 +1316,7 @@ locate any POD in the same file,
 =item 2.
 
 extract information from that POD, most especially from 
-the C<=head1 REQUIRED ARGUMENTS> and C<=head1 OPTIONS> sections,
+the C<=head[1-4] REQUIRED ARGUMENTS> and C<=head[1-4] OPTIONS> sections,
 
 =item 3.
 
@@ -1456,7 +1447,8 @@ __END__ statement (like in the L<SYNOPSIS>), or interspersed in the code:
     }
 
 When Getopt::Euclid is loaded in a non-C<.pm> file, it searches that file for
-the following POD documentation:
+the following documentation in the POD head sections (=head1, =head2, =head3 or
+=head4):
 
 =over
 
@@ -1510,7 +1502,7 @@ See L<Specifying arguments> for details of the specification syntax.
 
 The actual headings that Getopt::Euclid can recognize here are:
 
-    =head1 [STANDARD|STD|PROGRAM|SCRIPT|CLI|COMMAND[-| ]LINE] [REQUIRED|MANDATORY] [PARAM|PARAMETER|ARG|ARGUMENT][S]
+    =head[1-4] [STANDARD|STD|PROGRAM|SCRIPT|CLI|COMMAND[-| ]LINE] [REQUIRED|MANDATORY] [PARAM|PARAMETER|ARG|ARGUMENT][S]
 
 =item =head1 OPTIONS
 
@@ -1524,7 +1516,7 @@ but there is no requirement that it supply both, or either.
 
 The actual headings that Getopt::Euclid recognizes here are:
 
-    =head1 [STANDARD|STD|PROGRAM|SCRIPT|CLI|COMMAND[-| ]LINE] OPTION[AL|S] [PARAM|PARAMETER|ARG|ARGUMENT][S]
+    =head[1-4] [STANDARD|STD|PROGRAM|SCRIPT|CLI|COMMAND[-| ]LINE] OPTION[AL|S] [PARAM|PARAMETER|ARG|ARGUMENT][S]
 
 =item =head1 COPYRIGHT
 
