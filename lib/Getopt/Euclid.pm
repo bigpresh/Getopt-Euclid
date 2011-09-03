@@ -1904,8 +1904,24 @@ Getopt::Euclid recognizes the following standard placeholder types:
                     matching the specified
                     pattern
 
-Since regular expressions are supported, you can easily match many more types
-of placeholders by using the prebuilt regular expressions available in Regexp::Common. 
+Since regular expressions are supported, you can easily match many more type of
+strings for placeholders by using the regular expressions available in Regexp::Common.
+If you do that, you may want to also use custom placeholder error messages (see
+L<Placeholder type errors>) since the messages would otherwise not be very
+informative to users.
+
+    use Regexp::Common qw /zip/;
+    use Getopt::Euclid;
+
+    ...
+
+    =item -p <postcode>
+
+    Enter your postcode here
+
+    =for Euclid:
+        postcode.type:  /$RE{zip}{France}/
+        postcode.error: <postcode> myst be a valid ZIP code
 
 =head2 Placeholder type errors
 
