@@ -12,13 +12,26 @@ resources
    bugtracker  'https://rt.cpan.org/Dist/Display.html?Name=Getopt-Euclid';
    repository  'git://getopt-euclid.git.sourceforge.net/gitroot/getopt-euclid/getopt-euclid';
 
-build_requires 'Test::More'      => '0';
+build_requires 'Test::More'            => '0';
 
-requires       'version'               => 0;
-requires       'File::Basename'        => 0;
-requires       'File::Spec::Functions' => 0;
-requires       'List::Util'            => 0;
-requires       'Text::Balanced'        => 0;
-requires       'Perl::Tidy'            => 0;
+requires       'version'               => '0';
+requires       'File::Basename'        => '0';
+requires       'File::Spec::Functions' => '0';
+requires       'List::Util'            => '0';
+requires       'Text::Balanced'        => '0';
+requires       'Perl::Tidy'            => '0';
 
 WriteAll;
+
+if ( -e 'MANIFEST.SKIP' ) {
+   generate_readme( 'lib/Getopt/Euclid.pm', 'README' ); 
+}
+
+
+
+sub generate_readme {
+   my ($in, $out) = @_;
+   `pod2text $in $out`;
+   warn "Warning: Could not generate $out.\n$!\n" if $? == -1;
+   return $?; # exit status
+}

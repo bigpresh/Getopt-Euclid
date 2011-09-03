@@ -23,3 +23,16 @@ my $builder = Module::Build->new(
 );
 
 $builder->create_build_script();
+
+if ( -e 'MANIFEST.SKIP' ) {
+   generate_readme( 'lib/Getopt/Euclid.pm', 'README' ); 
+}
+
+
+
+sub generate_readme {
+   my ($in, $out) = @_;
+   `pod2text $in $out`;
+   warn "Warning: Could not generate $out.\n$!\n" if $? == -1;
+   return $?; # exit status
+}
