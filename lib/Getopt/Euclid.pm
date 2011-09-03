@@ -15,7 +15,7 @@ use Perl::Tidy;
 # Set some module variables
 my $has_run = 0;
 my $constraints_processed = 0;
-my @pm_pods;
+my @pods;
 my $minimal_keys;
 my $vars_prefix;
 my $defer;
@@ -31,8 +31,6 @@ my $version; # --version message
 # Global variables
 our $SCRIPT_NAME;
 our $SCRIPT_VERSION; # for ticket # 55259
-
-# END { $has_run = 1 }
 
 my $OPTIONAL;
 $OPTIONAL = qr{ \[ [^[]* (?: (??{$OPTIONAL}) [^[]* )* \] }xms;
@@ -344,7 +342,11 @@ sub _process_prog_pod {
 
     # Acquire POD source...
     my $source = $0;
-    $man = _get_pod( $source, reverse @pm_pods );
+    if ( -e $source ) {
+        # When calling perl -e '...', $0 is '-e', i.e. not a actual file
+        push @pods, $source;
+    }
+    $man = _get_pod( reverse @pods );
 
     # Clean up line delimeters
     $man =~ s{ [\n\r] }{\n}gx;
@@ -365,7 +367,13 @@ sub _process_prog_pod {
         $SCRIPT_VERSION = $main::VERSION;
     }
     if ( !defined $SCRIPT_VERSION ) {
-        my $filedate = localtime((stat $0)[9]);
+        my @stat = stat $0;
+        my $filedate;
+        if (scalar @stat == 0) {
+           $filedate = 'unknown';
+        } else { 
+           $filedate = localtime $stat[9];
+        }
         $SCRIPT_VERSION = $filedate;
     }
     $man =~ s{ ^(=head1 $VERS    \s*) .*? (\s*) $EOHEAD }
@@ -911,7 +919,7 @@ sub _convert_to_regex {
         push @arg_variants, @{$args_ref->{$arg_name}->{variants}};
     }
     my $no_match = join('|',@arg_variants);
-####    $no_match =~ s{([@#$^*()+{}?])}{\\$1}gxms; # Quotemeta specials 
+    $no_match =~ s{([@#$^*()+{}?])}{\\$1}gxms; # Quotemeta specials 
     $no_match = '(?!'.$no_match.')';
 
 
@@ -920,7 +928,7 @@ sub _convert_to_regex {
         my $regex = $arg_name;
 
         # Quotemeta specials...
-####        $regex =~ s{([@#$^*()+{}?])}{\\$1}gxms;
+        $regex =~ s{([@#$^*()+{}?])}{\\$1}gxms;
 
         $regex = "(?:$regex)";
 
@@ -1089,7 +1097,7 @@ sub _fail {
 sub _process_pm_pod {
     my @caller = caller(2); # at import()'s level
 
-    push @pm_pods, $caller[1];
+    push @pods, $caller[1];
 
     # Install this import() sub as module's import sub...
     no strict 'refs';
