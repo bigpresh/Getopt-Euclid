@@ -2,7 +2,7 @@ use strict;
 use warnings;
 use Module::Build;
 
-# If you updated this, don't forget to update the Makefile.PL file as well!
+# If you updated this file, don't forget to update the Makefile.PL file as well!
 
 my $builder = Module::Build->new(
     module_name         => 'Getopt::Euclid',
