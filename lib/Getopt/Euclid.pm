@@ -315,10 +315,11 @@ sub _process_pod {
 
 sub _process_prog_pod {
     # Set up parsing rules...
-    my $HWS     = qr{ [^\S\n]*      }xms;
-    my $EOHEAD  = qr{ (?= ^=head1 | \z)  }xms;
-    my $POD_CMD = qr{            = [^\W\d]\w+ [^\n]* (?= \n\n )}xms;
-    my $POD_CUT = qr{ (?! \n\n ) = cut $HWS          (?= \n\n )}xms;
+    my $HWS        = qr{ [^\S\n]*               }xms;
+    my $HEAD_START = qr{ ^=head[1-4]            }xms;
+    my $HEAD_END   = qr{ (?= $HEAD_START | \z)  }xms;
+    my $POD_CMD    = qr{            = [^\W\d]\w+ [^\n]* (?= \n\n )}xms;
+    my $POD_CUT    = qr{ (?! \n\n ) = cut $HWS          (?= \n\n )}xms;
 
     my $NAME  = qr{ $HWS NAME    $HWS \n }xms;
     my $VERS  = qr{ $HWS VERSION $HWS \n }xms;
@@ -357,12 +358,12 @@ sub _process_prog_pod {
 
     # Put program name in man
     ($SCRIPT_NAME) = ( splitpath($0) )[-1];
-    $man =~ s{ ^(=head1 $NAME \s*) .*? (- .*)? $EOHEAD }
+    $man =~ s{ ($HEAD_START $NAME \s*) .*? (- .*)? $HEAD_END }
              {join(' ', $1, $SCRIPT_NAME, $2 || "\n\n" )}xems;
 
     # Put version number in man
     ($SCRIPT_VERSION) = 
-        $man =~ m/^=head1 $VERS .*? (\d+(?:[._]\d+)+) .*? $EOHEAD /xms;
+        $man =~ m/$HEAD_START $VERS .*? (\d+(?:[._]\d+)+) .*? $HEAD_END /xms;
     if ( !defined $SCRIPT_VERSION ) {
         $SCRIPT_VERSION = $main::VERSION;
     }
@@ -376,24 +377,24 @@ sub _process_prog_pod {
         }
         $SCRIPT_VERSION = $filedate;
     }
-    $man =~ s{ ^(=head1 $VERS    \s*) .*? (\s*) $EOHEAD }
+    $man =~ s{ ($HEAD_START $VERS    \s*) .*? (\s*) $HEAD_END }
              {$1 This document refers to $SCRIPT_NAME version $SCRIPT_VERSION $2}xms;
 
     # Extra info from PODs
     my ($options, $opt_name, $required, $req_name, $licence);
-    while ($man =~ m/^=head1 ($REQUIRED) (.*?) $EOHEAD /gxms) {
+    while ($man =~ m/$HEAD_START ($REQUIRED) (.*?) $HEAD_END /gxms) {
         # Required arguments
         my ( $more_req_name, $more_required ) = ($1, $2);
         $req_name = $more_req_name if not defined $req_name;
         $required = ( $more_required || q{} ) . ( $required || q{} );
     }
-    while ($man =~ m/^=head1 ($OPTIONS)  (.*?) $EOHEAD /gxms) {
+    while ($man =~ m/$HEAD_START ($OPTIONS)  (.*?) $HEAD_END /gxms) {
         # Optional arguments
         my ( $more_opt_name, $more_options ) = ($1, $2);
         $opt_name = $more_opt_name if not defined $opt_name;
         $options = ( $more_options || q{} ) . ( $options || q{} );
     }
-    while ($man =~ m/^=head1 [^\n]+ (?i: licen[sc]e | copyright ) .*? \n \s* (.*?) \s* $EOHEAD /gxms) {
+    while ($man =~ m/$HEAD_START [^\n]+ (?i: licen[sc]e | copyright ) .*? \n \s* (.*?) \s* $HEAD_END /gxms) {
         # License information
         my ($more_licence) = ($1, $2);
         $licence = ( $more_licence || q{} ) . ( $licence || q{} );
@@ -460,15 +461,15 @@ sub _process_prog_pod {
     }
     $arg_summary =~ s/\s+/ /gxms;
 
-    $man =~ s{ ^(=head1 $USAGE \s*) .*? (\s*) $EOHEAD }
+    $man =~ s{ ($HEAD_START $USAGE \s*) .*? (\s*) $HEAD_END }
             {$1 $SCRIPT_NAME $arg_summary $2}xms;
 
     # Insert default values (if any) in the program's documentation
     $required = _insert_default_values(\%requireds, \%requireds_hash, \@requireds_order);
     $options  = _insert_default_values(\%options  , \%options_hash  , \@options_order  );
 
-    $man =~ s{ ^(=head1 $REQUIRED \s*) .*? (\s*) $EOHEAD } {$1$required$2}xms;
-    $man =~ s{ ^(=head1 $OPTIONS  \s*) .*? (\s*) $EOHEAD } {$1$options$2}xms;
+    $man =~ s{ ($HEAD_START $REQUIRED \s*) .*? (\s*) $HEAD_END } {$1$required$2}xms;
+    $man =~ s{ ($HEAD_START $OPTIONS  \s*) .*? (\s*) $HEAD_END } {$1$options$2}xms;
 
     # Usage message
     $usage  = "       $SCRIPT_NAME $arg_summary\n";
