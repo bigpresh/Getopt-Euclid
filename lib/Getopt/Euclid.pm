@@ -1185,7 +1185,7 @@ Getopt::Euclid - Executable Uniform Command-Line Interface Descriptions
 
 =head1 VERSION
 
-This document describes Getopt::Euclid version 0.2.7
+This document describes Getopt::Euclid version 0.2.8
 
 =head1 SYNOPSIS
 
@@ -1441,6 +1441,8 @@ __END__ statement (like in the L<SYNOPSIS>), or interspersed in the code:
     =back
 
     =cut
+
+    # Getopt::Euclid has parsed commandline parameters and stored them in %ARGV
 
     if ($ARGV{-i}) {
         print "Interactive mode...\n";
@@ -1979,7 +1981,8 @@ The default value can be any valid Perl compile-time expression:
     =for Euclid:
         pi value.default: atan2(0,-1)
 
-You can refer to an argument default value in its POD entry as shown below:
+You can refer to an argument default or optional default value in its POD entry
+as shown below:
 
     =item -size <h>[x<w>]
 
@@ -1988,6 +1991,14 @@ You can refer to an argument default value in its POD entry as shown below:
     =for Euclid:
         h.default: 24
         w.default: 80
+
+    =item --debug <level>
+   
+    Set the debug level. The default is level.default if you supply --debug but
+    omit a <level> value.
+
+    =for Euclid:
+        level.opt_default: 3
 
 =head2 Exclusive placeholders
 
