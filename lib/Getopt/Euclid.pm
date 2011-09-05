@@ -1504,6 +1504,9 @@ The actual headings that Getopt::Euclid can recognize here are:
 
     =head[1-4] [STANDARD|STD|PROGRAM|SCRIPT|CLI|COMMAND[-| ]LINE] [REQUIRED|MANDATORY] [PARAM|PARAMETER|ARG|ARGUMENT][S]
 
+B<Caveat:> Do not put additional subheadings (=headX) inside the REQUIRED ARGUMENTS
+section.
+
 =item =head1 OPTIONS
 
 Getopt::Euclid uses the specifications in this POD section to build a
@@ -1517,6 +1520,9 @@ but there is no requirement that it supply both, or either.
 The actual headings that Getopt::Euclid recognizes here are:
 
     =head[1-4] [STANDARD|STD|PROGRAM|SCRIPT|CLI|COMMAND[-| ]LINE] OPTION[AL|S] [PARAM|PARAMETER|ARG|ARGUMENT][S]
+
+B<Caveat:> Do not put additional subheadings (=headX) inside the REQUIRED ARGUMENTS
+section.
 
 =item =head1 COPYRIGHT
 
