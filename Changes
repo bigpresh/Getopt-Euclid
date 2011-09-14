@@ -1,6 +1,6 @@
 Revision history for Getopt-Euclid
 
-0.x
+0.3.0
   - Reverted feature to match POD head section =head2, =head3 and =head4 because
     of backward compatibility issue (RT bug #70942)
 
