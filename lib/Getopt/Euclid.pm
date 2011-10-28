@@ -1,6 +1,7 @@
 package Getopt::Euclid;
 
-use version; $VERSION = qv('0.3.0');
+use version 0.77;
+$VERSION = qv('0.3.0_1');
 
 use warnings;
 use strict;
