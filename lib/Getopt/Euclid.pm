@@ -1065,9 +1065,9 @@ sub _longestname {
 
 sub _export_var {
     my ( $prefix, $key, $value ) = @_;
-    my $callpkg = caller(2+($Exporter::ExportLevel || 0)); # at import()'s level
     my $export_as = $prefix . $key;
     $export_as =~ s{\W}{_}gxms;    # mainly for '-'
+    my $callpkg = caller(2+($Exporter::ExportLevel || 0)); # at import()'s level
     no strict 'refs';
     *{"$callpkg\::$export_as"} = ( ref $value ) ? $value : \$value;
 }
