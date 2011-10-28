@@ -265,8 +265,15 @@ sub process_args {
             my $arg_name = $long_names_hash{$opt_name};
             my $arg_info = $all_args_ref->{$arg_name};
             my $val;
-            $val = [] if $arg_info->{is_repeatable} or $arg_name =~ />\.\.\./;
-            $val = {} if keys %{ $arg_info->{var} } > 1;
+            if ( $arg_info->{is_repeatable} or $arg_name =~ />\.\.\./ ) {
+               # Empty arrayref for repeatable options
+               $val = [];
+            } else {               
+               if (keys %{ $arg_info->{var} } > 1) {
+                   # Empty hashref for non-repeatable options with multiple placeholders
+                   $val = {};
+               }
+            }
             _export_var( $vars_prefix, $opt_name, $val );
         }
     }
@@ -2117,6 +2124,7 @@ That is, if your program accepts the following arguments:
     --auto-fudge <factor>      (repeatable)
     --also <a>...
     --size <w>x<h>
+    --multiply <num1>x<num2>   (repeatable)
 
 Then these variables will be exported
 
@@ -2127,6 +2135,7 @@ Then these variables will be exported
     @ARGV_auto_fudge
     @ARGV_also
     %ARGV_size          # With entries $ARGV_size{w} and $ARGV_size{h}
+    @ARGV_multiply      # With entries that are hashref similar to \%ARGV_size
 
 For options that have multiple variants, only the longest variant is exported.
 

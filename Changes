@@ -2,6 +2,8 @@ Revision history for Getopt-Euclid
 
 0.3.0_1
   - Try if the CPAN indexer likes this $VERSION better
+  - Export repeatable options with multiple placeholders as an empty arrayref,
+    not as an empty hashref (RT bug #71165, reported by Bill Levering)
 
 0.3.0
   - Reverted feature to match POD head section =head2, =head3 and =head4 because
