@@ -2185,7 +2185,7 @@ access to the string of this message.
 For --man, if the standard output stream is connected to a terminal and the
 POD::Text module is available, the POD is formatted before printing. If the
 IO::Page or IO::Pager::Page module is available, the formatted documentation is
-then paged. If standard output is not connected to a terminal or POD::Text is
+then paged. If standard output is not connected to a terminal or Pod::Text is
 not available, the POD is not formatted.
 
 =item --version  version()
