@@ -1127,7 +1127,8 @@ sub _get_pod {
         # Extract POD...
         for my $in_file (@in_files) {
             Perl::Tidy::perltidy(
-              argv        =>  [], # explicitly use no args to prevent use of @ARGV
+              #argv        =>  [], # explicitly use no args to prevent use of @ARGV
+              argv        => ['--force-read-binary'], # to help with standalone executable scripts 
               source      =>  $in_file,
               formatter   =>  $pod_extracter,
             );
