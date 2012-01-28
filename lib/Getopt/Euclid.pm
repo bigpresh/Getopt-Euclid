@@ -988,19 +988,12 @@ sub _convert_to_regex {
 
 sub _print_pod {
     my ( $pod, $paged ) = @_;
-
-    if ( -t *STDOUT ) {
-        if ($paged) {
-            eval { require IO::Page } or eval { require IO::Pager::Page };
-        }
-        open my $pod_handle, '<', \$pod;
-        my $parser = Pod::Text->new( sentence => 0, width => 78 );
-        $parser->parse_from_filehandle($pod_handle);
+    if ($paged) {
+        eval { require IO::Page } or eval { require IO::Pager::Page };
     }
-    else {
-        print $pod;
-    }
-
+    open my $pod_handle, '<', \$pod;
+    my $parser = Pod::Text->new( sentence => 0, width => 78 );
+    $parser->parse_from_filehandle($pod_handle);
 }
 
 
