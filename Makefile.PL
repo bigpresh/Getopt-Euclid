@@ -14,9 +14,13 @@ resources
 
 build_requires 'Test::More'            => '0';
 
+# Perl core modules
+requires       'Pod::Text'             => '0';
 requires       'File::Basename'        => '0';
 requires       'File::Spec::Functions' => '0';
 requires       'List::Util'            => '0';
+
+# CPAN modules
 requires       'Text::Balanced'        => '0';
 requires       'Perl::Tidy'            => '0';
 

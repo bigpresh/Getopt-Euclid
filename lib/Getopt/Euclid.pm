@@ -5,12 +5,13 @@ our $VERSION = '0.3.3';
 use warnings;
 use strict;
 use Carp;
+use Pod::Text;
 use File::Basename;
 use File::Spec::Functions qw(splitpath catpath catfile);
 use List::Util qw( first );
 use Text::Balanced qw(extract_bracketed extract_variable extract_multiple);
-use Getopt::Euclid::PodExtract;
 use Perl::Tidy;
+use Getopt::Euclid::PodExtract;
 
 # Set some module variables
 my $has_run = 0;
@@ -916,7 +917,7 @@ sub _convert_to_regex {
         push @arg_variants, @{$args_ref->{$arg_name}->{variants}};
     }
     my $no_match = join('|',@arg_variants);
-    $no_match =~ s{([@#$^*()+{}?])}{\\$1}gxms; # Quotemeta specials 
+    $no_match =~ s{([@#$^*()+{}?])}{\\$1}gxms; # Quotemeta specials
     $no_match = '(?!'.$no_match.')';
 
 
@@ -988,7 +989,7 @@ sub _convert_to_regex {
 sub _print_pod {
     my ( $pod, $paged ) = @_;
 
-    if ( -t *STDOUT and eval { require Pod::Text } ) {
+    if ( -t *STDOUT ) {
         if ($paged) {
             eval { require IO::Page } or eval { require IO::Pager::Page };
         }
