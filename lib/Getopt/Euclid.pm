@@ -5,7 +5,7 @@ our $VERSION = '0.3.3';
 use warnings;
 use strict;
 use Carp;
-use Pod::Text;
+use Pod::Simple::Text;
 use File::Basename;
 use File::Spec::Functions qw(splitpath catpath catfile);
 use List::Util qw( first );
@@ -991,9 +991,9 @@ sub _print_pod {
     if ($paged) {
         eval { require IO::Page } or eval { require IO::Pager::Page };
     }
-    open my $pod_handle, '<', \$pod;
-    my $parser = Pod::Text->new( sentence => 0, width => 78 );
-    $parser->parse_from_filehandle($pod_handle);
+  
+    # Lines are wrapped at $Text::Wrap::columns columns (default value: 76)
+    Pod::Simple::Text->filter( \$pod );
 }
 
 
@@ -2421,6 +2421,14 @@ Getopt::Euclid requires no configuration files or environment variables.
 =head1 DEPENDENCIES
 
 =over 
+
+=item *
+
+version
+
+=item *
+
+Pod::Simple::Text
 
 =item *
 

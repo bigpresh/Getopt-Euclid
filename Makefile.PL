@@ -12,17 +12,18 @@ resources
    bugtracker  'https://rt.cpan.org/Dist/Display.html?Name=Getopt-Euclid';
    repository  'git://getopt-euclid.git.sourceforge.net/gitroot/getopt-euclid/getopt-euclid';
 
-build_requires 'Test::More'            => '0';
+build_requires 'Test::More'            => 0;
 
 # Perl core modules
-requires       'Pod::Text'             => '0';
-requires       'File::Basename'        => '0';
-requires       'File::Spec::Functions' => '0';
-requires       'List::Util'            => '0';
+requires       'version'               => 0,
+requires       'Pod::Simple::Text'     => 0;
+requires       'File::Basename'        => 0;
+requires       'File::Spec::Functions' => 0;
+requires       'List::Util'            => 0;
 
 # CPAN modules
-requires       'Text::Balanced'        => '0';
-requires       'Perl::Tidy'            => '0';
+requires       'Text::Balanced'        => 0;
+requires       'Perl::Tidy'            => 0;
 
 WriteAll;
 

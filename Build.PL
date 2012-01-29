@@ -13,6 +13,7 @@ my $builder = Module::Build->new(
     requires => {
         'Test::More'            => 0,
         'version'               => 0,
+        'Pod::Simple::Text'     => 0;
         'File::Basename'        => 0,
         'File::Spec::Functions' => 0,
         'List::Util'            => 0,
