@@ -25,6 +25,8 @@ requires       'List::Util'            => 0;
 requires       'Text::Balanced'        => 0;
 requires       'Perl::Tidy'            => 0;
 
+recommends     'IO::Pager::Page'       => 0;
+
 WriteAll;
 
 if ( -e 'MANIFEST.SKIP' ) {

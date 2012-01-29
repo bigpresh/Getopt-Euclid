@@ -10,16 +10,25 @@ my $builder = Module::Build->new(
     license             => 'perl',
     dist_version_from   => 'lib/Getopt/Euclid.pm',
 
-    requires => {
+    build_requires      => {
+        'Test::More'            => 0,
+    },
+
+    requires            => {
         'Test::More'            => 0,
         'version'               => 0,
-        'Pod::Simple::Text'     => 0;
+        'Pod::Simple::Text'     => 0,
         'File::Basename'        => 0,
         'File::Spec::Functions' => 0,
         'List::Util'            => 0,
         'Text::Balanced'        => 0,
         'Perl::Tidy'            => 0,
     },
+
+    recommends          => {
+        'IO::Pager::Page'       => 0,
+    },
+
     add_to_cleanup      => [ 'Getopt-Euclid-*' ],
 );
 

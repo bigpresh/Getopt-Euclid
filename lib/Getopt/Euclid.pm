@@ -991,7 +991,7 @@ sub _print_pod {
 
     if ($paged) {
         # Page output
-        eval { require IO::Page } or eval { require IO::Pager::Page };
+        eval { require IO::Pager::Page } or eval { require IO::Page };
     }
   
     # Convert POD to plaintext, wrapping the lines at $Text::Wrap::columns chars
@@ -2452,6 +2452,10 @@ Text::Balanced
 =item *
 
 Perl::Tidy
+
+=item *
+
+IO::Pager::Page (optional)
 
 =back
 
