@@ -147,7 +147,7 @@ sub process_args {
     # Handle standard args...
 
     if ( grep { / --man /xms } @$args ) {
-        _print_pod( Getopt::Euclid->man() , 'paged' );
+        _print_pod( Getopt::Euclid->man(), 'paged' );
         exit;
     }
     elsif ( first { $_ eq '--usage' } @$args ) {
@@ -155,7 +155,7 @@ sub process_args {
         exit;
     }
     elsif ( first { $_ eq '--help' } @$args ) {
-        _print_pod( Getopt::Euclid->help() );
+        _print_pod( Getopt::Euclid->help(), 'paged' );
         exit;
     }
     elsif ( first { $_ eq '--version' } @$args ) {
@@ -988,11 +988,14 @@ sub _convert_to_regex {
 
 sub _print_pod {
     my ( $pod, $paged ) = @_;
+
     if ($paged) {
+        # Page output
         eval { require IO::Page } or eval { require IO::Pager::Page };
     }
   
-    # Lines are wrapped at $Text::Wrap::columns columns (default value: 76)
+    # Convert POD to plaintext, wrapping the lines at $Text::Wrap::columns chars
+    # (i.e. 76) and print to stdout
     Pod::Simple::Text->filter( \$pod );
 }
 
