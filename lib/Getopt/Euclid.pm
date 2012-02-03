@@ -2455,7 +2455,7 @@ Perl::Tidy
 
 =item *
 
-IO::Pager::Page (optional)
+IO::Pager::Page (recommended)
 
 =back
 
