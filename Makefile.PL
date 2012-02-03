@@ -12,9 +12,9 @@ resources
    bugtracker  'https://rt.cpan.org/Dist/Display.html?Name=Getopt-Euclid';
    repository  'git://getopt-euclid.git.sourceforge.net/gitroot/getopt-euclid/getopt-euclid';
 
+# Perl core modules
 build_requires 'Test::More'            => 0;
 
-# Perl core modules
 requires       'version'               => 0,
 requires       'Pod::Simple::Text'     => 0;
 requires       'File::Basename'        => 0;
