@@ -10,8 +10,7 @@ use File::Basename;
 use File::Spec::Functions qw(splitpath catpath catfile);
 use List::Util qw( first );
 use Text::Balanced qw(extract_bracketed extract_variable extract_multiple);
-use Perl::Tidy;
-use Getopt::Euclid::PodExtract;
+use Pod::Select;
 
 # Set some module variables
 my $has_run = 0;
@@ -1112,7 +1111,7 @@ sub _get_pod {
     my (@perl_files) = @_;  # e.g. .pl, .pm or .t files
 
     my $pod_string = '';
-    my $pod_extracter = Getopt::Euclid::PodExtract->new(\$pod_string);
+    open my $pod_fh, '>', \$pod_string or die "Error: Could not open filehandle to variable:\n$!\n";
     for my $perl_file (@perl_files) {
 
         # Get corresponding .pod file
@@ -1123,15 +1122,12 @@ sub _get_pod {
     
         # Extract POD...
         for my $in_file (@in_files) {
-            Perl::Tidy::perltidy(
-              #argv        =>  [], # explicitly use no args to prevent use of @ARGV
-              argv        => ['--force-read-binary'], # to help with standalone executable scripts 
-              source      =>  $in_file,
-              formatter   =>  $pod_extracter,
-            );
-            $pod_string .= "\n" if $pod_string;
+            podselect( {-output => $pod_fh}, $in_file );
+            print $pod_fh "\n" if $pod_string;
         }
+
     }
+    close $pod_fh;
 
     return $pod_string;
 }
@@ -2431,6 +2427,10 @@ version
 
 =item *
 
+Pod::Select
+
+=item *
+
 Pod::Simple::Text
 
 =item *
@@ -2448,10 +2448,6 @@ List::Util
 =item *
 
 Text::Balanced
-
-=item *
-
-Perl::Tidy
 
 =item *
 

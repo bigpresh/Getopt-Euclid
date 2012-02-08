@@ -16,6 +16,7 @@ resources
 build_requires 'Test::More'            => 0;
 
 requires       'version'               => 0,
+requires       'Pod::Select'           => 0;
 requires       'Pod::Simple::Text'     => 0;
 requires       'File::Basename'        => 0;
 requires       'File::Spec::Functions' => 0;
@@ -23,7 +24,6 @@ requires       'List::Util'            => 0;
 
 # CPAN modules
 requires       'Text::Balanced'        => 0;
-requires       'Perl::Tidy'            => 0;
 
 recommends     'IO::Pager::Page'       => 0;
 
