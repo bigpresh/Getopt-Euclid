@@ -17,7 +17,7 @@ build_requires 'Test::More'            => 0;
 
 requires       'version'               => 0,
 requires       'Pod::Select'           => 0;
-requires       'Pod::Simple::Text'     => 0;
+requires       'Pod::PlainText'        => 0; # uses Pod::Select
 requires       'File::Basename'        => 0;
 requires       'File::Spec::Functions' => 0;
 requires       'List::Util'            => 0;

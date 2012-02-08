@@ -5,12 +5,13 @@ our $VERSION = '0.3.3';
 use warnings;
 use strict;
 use Carp;
-use Pod::Simple::Text;
+use Pod::Select;
+use Pod::PlainText;
 use File::Basename;
 use File::Spec::Functions qw(splitpath catpath catfile);
 use List::Util qw( first );
 use Text::Balanced qw(extract_bracketed extract_variable extract_multiple);
-use Pod::Select;
+
 
 # Set some module variables
 my $has_run = 0;
@@ -993,9 +994,11 @@ sub _print_pod {
         eval { require IO::Pager::Page } or eval { require IO::Page };
     }
   
-    # Convert POD to plaintext, wrapping the lines at $Text::Wrap::columns chars
-    # (i.e. 76) and print to stdout
-    Pod::Simple::Text->filter( \$pod );
+    # Convert POD to plaintext, wrapping the lines at 76 chars and print to STDOUT
+    open my $parser_in, '<', \$pod or die "Could not read from variable:\n$!\n";
+    Pod::PlainText->new()->parse_from_filehandle($parser_in);
+    close $parser_in;
+
 }
 
 
@@ -2431,7 +2434,7 @@ Pod::Select
 
 =item *
 
-Pod::Simple::Text
+Pod::PlainText
 
 =item *
 
