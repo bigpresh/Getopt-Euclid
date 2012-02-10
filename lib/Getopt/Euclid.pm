@@ -4,6 +4,7 @@ use version; our $VERSION = version->declare('0.3.4_1');
 
 use warnings;
 use strict;
+use 5.005000; # perl 5.5.0
 use Carp;
 use Pod::Select;
 use Pod::PlainText;
