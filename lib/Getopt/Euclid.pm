@@ -1,6 +1,6 @@
 package Getopt::Euclid;
 
-use version; our $VERSION = version->declare('0.3.3');
+use version; our $VERSION = version->declare('0.3.4_1');
 
 use warnings;
 use strict;
