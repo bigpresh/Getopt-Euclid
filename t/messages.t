@@ -25,7 +25,7 @@ messages.t - Convert a file to Melkor's .orc format
 
 \=head1 VERSION
 
- This document refers to messages.t version 1.9.4 
+This document refers to messages.t version 1.9.4 
 
 \=head1 USAGE
 

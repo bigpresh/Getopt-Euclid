@@ -382,7 +382,7 @@ sub _process_prog_pod {
         $SCRIPT_VERSION = (-e $0) ? localtime((stat $0)[9]) : 'unknown';
     }
     $man =~ s{ ($HEAD_START $VERS    \s*) .*? (\s*) $HEAD_END }
-             {$1 This document refers to $SCRIPT_NAME version $SCRIPT_VERSION $2}xms;
+             {$1This document refers to $SCRIPT_NAME version $SCRIPT_VERSION $2}xms;
 
     # Extra info from PODs
     my ($options, $opt_name, $required, $req_name, $licence);

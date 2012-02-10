@@ -63,7 +63,7 @@ hier.t - Convert a file to Melkor\'s .orc format
 
 \=head1 VERSION
 
- This document refers to hier.t version 1.9.4 
+This document refers to hier.t version 1.9.4 
 
 \=head1 USAGE
 

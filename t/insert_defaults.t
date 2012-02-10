@@ -103,7 +103,7 @@ insert_defaults.t - Convert a file to Melkor's .orc format
 
 \=head1 VERSION
 
- This document refers to insert_defaults.t version 1.9.4 
+This document refers to insert_defaults.t version 1.9.4 
 
 \=head1 USAGE
 

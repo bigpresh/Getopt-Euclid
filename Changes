@@ -2,6 +2,7 @@ Revision history for Getopt-Euclid
 
 0.3.x
   - Fixed issue where the NAME section appeared as a VERBATIM section (which podchecker complains about)
+  - VERSION section also did not need to be VERBATIM
   - Always convert POD to text when calling help()
   - help() is now paged if IO::Pager::Page is installed
   - Dependency changes:
