@@ -59,7 +59,7 @@ is $ARGV{size}{w}, $W           => 'Got expected value for size <w>';
 my $man = <<EOS;
 =head1 NAME
 
- hier2.t - Convert a file to Melkor\'s .orc format
+hier2.t - Convert a file to Melkor\'s .orc format
 
 \=head1 VERSION
 

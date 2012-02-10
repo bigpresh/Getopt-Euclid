@@ -370,7 +370,7 @@ sub _process_prog_pod {
     # Put program name in man
     $SCRIPT_NAME = (-e $0) ? (splitpath $0)[-1] : 'unknown';
     $man =~ s{ ($HEAD_START $NAME \s*) .*? (- .*)? $HEAD_END }
-             {join(' ', $1, $SCRIPT_NAME, $2 || "\n\n" )}xems;
+              {$1.$SCRIPT_NAME.($2 ? " $2" : "\n\n")}xems;
 
     # Put version number in man
     ($SCRIPT_VERSION) = 

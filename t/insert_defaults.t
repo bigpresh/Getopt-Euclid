@@ -99,7 +99,7 @@ is $help_test, $help => 'Help has correct default values displayed';
 my $man = <<EOS;
 \=head1 NAME
 
- insert_defaults.t - Convert a file to Melkor's .orc format
+insert_defaults.t - Convert a file to Melkor's .orc format
 
 \=head1 VERSION
 

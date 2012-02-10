@@ -17,7 +17,7 @@ use Test::More 'no_plan';
 my $man = <<EOS;
 \=head1 NAME
 
- messages.t - Convert a file to Melkor's .orc format
+messages.t - Convert a file to Melkor's .orc format
 
 \=head1 SYNOPSIS
 
