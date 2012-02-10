@@ -2189,22 +2189,17 @@ message.
 
 =item --help  help()
 
-The --help argument causes the program to print a longer usage summary (with
-a full list of required and optional arguments) and exit. The
-C<Getopt::Euclid->help()> subroutine provides access to the string of this
-message.
+The --help argument causes the program to print a longer help message, with
+a full list of required and optional arguments, and exit. If the IO::Pager::Page
+module is available, the help message is then paged. The C<Getopt::Euclid->help()>
+subroutine provides access to the string of this message.
 
 =item --man  man()
 
-The --man argument causes the program to print the complete POD documentation
-for the program and exit. The C<Getopt::Euclid->man()> subroutine provides
-access to the string of this message.
-
-For --man, if the standard output stream is connected to a terminal and the
-POD::Text module is available, the POD is formatted before printing. If the
-IO::Page or IO::Pager::Page module is available, the formatted documentation is
-then paged. If standard output is not connected to a terminal or Pod::Text is
-not available, the POD is not formatted.
+The --man argument causes the program to print the complete documentation
+for the program, converted from POD to plaintext using Pod::PlainText, and exit.
+If the IO::Pager::Page module is available, the documentation is then paged. The
+C<Getopt::Euclid->man()> subroutine provides access to the string of this message.
 
 =item --version  version()
 
