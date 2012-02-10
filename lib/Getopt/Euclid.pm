@@ -1117,17 +1117,21 @@ sub _get_pod {
     open my $pod_fh, '>', \$pod_string or die "Error: Could not open filehandle to variable:\n$!\n";
     for my $perl_file (@perl_files) {
 
-        # Get corresponding .pod file
+        # Find corresponding .pod file
         my ($name, $path, $suffix) = fileparse($perl_file, qr/\.[^.]*/);
         my $pod_file = catfile( $path, $name.'.pod' );
-        my @in_files = ($perl_file);
-        push @in_files, $pod_file if ( -e $pod_file );
-    
-        # Extract POD...
-        for my $in_file (@in_files) {
-            podselect( {-output => $pod_fh}, $in_file );
-            print $pod_fh "\n" if $pod_string;
+
+        # Get POD either from .pod file (preferably) or from Perl file
+        if ( -e $pod_file ) {
+            # Get .pod file content
+            open my $in, '<', $pod_file or die "Could not open file $pod_file:\n$!\n";
+            print $pod_fh $_ while <$in>;
+            close $in;
+        } else {
+            # Parse POD content of Perl file
+            podselect( {-output => $pod_fh}, $perl_file );
         }
+        print $pod_fh "\n" if $pod_string;
 
     }
     close $pod_fh;
