@@ -21,6 +21,7 @@ my @pods;
 my $minimal_keys;
 my $vars_prefix;
 my $defer;
+my $pod_file;
 my $matcher;
 my %requireds_hash;
 my %options_hash;
@@ -96,9 +97,10 @@ sub Getopt::Euclid::Importer::DESTROY {
 
 sub import {
     shift @_;
-    @_ = grep { !( /:minimal_keys/ and $minimal_keys = 1 ) } @_;
-    @_ = grep { !( /:vars(?:<(\w+)>)?/ and $vars_prefix = $1 || "ARGV_" ) } @_;
-    @_ = grep { !( /:defer/ and $defer = 1 ) } @_;
+    @_ = grep { !( /:minimal_keys/     and $minimal_keys = 1             ) } @_;
+    @_ = grep { !( /:vars(?:<(\w+)>)?/ and $vars_prefix  = $1 || "ARGV_" ) } @_;
+    @_ = grep { !( /:defer/            and $defer        = 1             ) } @_;
+    @_ = grep { !( /:pod_file/         and $pod_file     = 1             ) } @_;
     croak "Unknown mode ('$_')" for @_;
 
     # No POD parsing and argument processing in Perl compile mode (ticket 34195)
@@ -316,6 +318,10 @@ sub _process_pod {
 
     # Process POD of caller program
     _process_prog_pod();
+
+    # Create a .pod file if requested
+    _create_pod_file() if $pod_file;
+
     $has_run = 1;
 
     return 1;
@@ -996,10 +1002,20 @@ sub _print_pod {
     }
   
     # Convert POD to plaintext, wrapping the lines at 76 chars and print to STDOUT
-    open my $parser_in, '<', \$pod or die "Could not read from variable:\n$!\n";
+    open my $parser_in, '<', \$pod or croak "Could not read from variable:\n$!\n";
     Pod::PlainText->new()->parse_from_filehandle($parser_in);
     close $parser_in;
+}
 
+
+sub _create_pod_file {
+    ####
+    #my $caller_fp = ;
+    #my $out_filename;
+    #open my $out_fh, '>', $out_filename or croak "Could
+    #print $out_fh ...
+    #close;
+    ####
 }
 
 
@@ -1087,7 +1103,7 @@ sub _make_equivalent {
 # Report problems in specification...
 sub _fail {
     my (@msg) = @_;
-    die "Getopt::Euclid: @msg\n";
+    croak "Getopt::Euclid: @msg\n";
 }
 
 
@@ -1115,7 +1131,7 @@ sub _get_pod {
     my (@perl_files) = @_;  # e.g. .pl, .pm or .t files
 
     my $pod_string = '';
-    open my $pod_fh, '>', \$pod_string or die "Error: Could not open filehandle to variable:\n$!\n";
+    open my $pod_fh, '>', \$pod_string or croak "Could not open filehandle to variable:\n$!\n";
     for my $perl_file (@perl_files) {
 
         # Find corresponding .pod file
@@ -1125,7 +1141,7 @@ sub _get_pod {
         # Get POD either from .pod file (preferably) or from Perl file
         if ( -e $pod_file ) {
             # Get .pod file content
-            open my $in, '<', $pod_file or die "Could not open file $pod_file:\n$!\n";
+            open my $in, '<', $pod_file or croak "Could not open file $pod_file:\n$!\n";
             print $pod_fh $_ while <$in>;
             close $in;
         } else {
