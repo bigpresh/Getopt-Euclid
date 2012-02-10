@@ -29,7 +29,7 @@ This document refers to messages.t version 1.9.4
 
 \=head1 USAGE
 
-     messages.t -o= <out_file> -i <file> [options] 
+    messages.t -o= <out_file> -i <file> [options] 
 
 \=head1 REQUIRED ARGUMENTS
 
