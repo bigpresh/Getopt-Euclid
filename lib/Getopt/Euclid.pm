@@ -1150,7 +1150,7 @@ sub _get_pod {
             chomp $first_line;
             if ( not ($first_line eq $pod_file_msg) ) {
                 # Do not use G::E auto-generated file since it lacks important stuff
-                print $pod_fh $first_line;
+                print $pod_fh "$first_line\n";
                 print $pod_fh $_ while <$in>;    
                 $got_pod = 1;
             }
