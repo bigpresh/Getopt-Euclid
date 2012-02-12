@@ -229,6 +229,27 @@ is $usage_test, $usage     => 'Correct usage message';
 my $version_test = Getopt::Euclid->version();
 is $version_test, $version => 'Correct version message';
 
+SKIP: {
+    skip 'Need Pod::Checker for this tests', 3 unless eval { require Pod::Checker };
+
+    require Pod::Checker;
+
+    open my $pod_fh, '<', \$man;
+    my $nof_errors = Pod::Checker::podchecker( $pod_fh );
+    is $nof_errors, 0;
+    close $pod_fh;
+
+    open $pod_fh, '<', \$podfile_test;
+    $nof_errors =  Pod::Checker::podchecker( $pod_fh );
+    is $nof_errors, 0;
+    close $pod_fh;
+
+    open my $pod_fh, '<', \$help_test;
+    $nof_errors =  Pod::Checker::podchecker( $pod_fh );
+    is $nof_errors, 0;
+    close $pod_fh;
+
+}
 
 __END__
 
