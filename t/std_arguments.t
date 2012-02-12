@@ -244,7 +244,7 @@ SKIP: {
     is $nof_errors, 0;
     close $pod_fh;
 
-    open my $pod_fh, '<', \$help_test;
+    open $pod_fh, '<', \$help_test;
     $nof_errors =  Pod::Checker::podchecker( $pod_fh );
     is $nof_errors, 0;
     close $pod_fh;
