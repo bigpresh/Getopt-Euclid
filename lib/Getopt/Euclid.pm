@@ -158,14 +158,8 @@ sub process_args {
     %ARGV = ();
 
     # Handle standard args...
-
-    if ( grep { / --man /xms } @$args ) {
+    if ( first { $_ eq '--man' } @$args ) {
         _print_pod( Getopt::Euclid->man(), 'paged' );
-        exit;
-    }
-    elsif ( first { $_ eq '--podfile' } @$args ) {
-        my $podfile = podfile( );
-        print "Wrote manual in file $podfile\n";
         exit;
     }
     elsif ( first { $_ eq '--usage' } @$args ) {
@@ -180,9 +174,14 @@ sub process_args {
         print Getopt::Euclid->version();
         exit;
     }
+    elsif ( first { $_ eq '--podfile' } @$args ) {
+        # Option meant for authors
+        my $podfile = podfile( );
+        print "Wrote POD manual in file $podfile\n";
+        exit;
+    }
 
     # Subroutine to report problems during parsing...
-
     *_bad_arglist = sub {
         my (@msg) = @_;
         my $msg = join q{}, @msg;
@@ -194,16 +193,15 @@ sub process_args {
     };
 
     # Run matcher...
-
-    my $all_args_ref = { %options_hash, %requireds_hash };
     my $argv = 
       join( q{ }, map { my $arg = $_; $arg =~ tr/ \t/\0\1/; $arg } @$args );
+
+    my $all_args_ref = { %options_hash, %requireds_hash };
     if ( my $error = _doesnt_match( $matcher, $argv, $all_args_ref ) ) {
         _bad_arglist($error);
     }
 
     # Check all requireds have been found...
-
     my @missing;
     for my $req ( keys %requireds_hash ) {
         push @missing, "\t$req\n" if !exists $ARGV{$req};
@@ -215,19 +213,15 @@ sub process_args {
     ) if @missing;
 
     # Back-translate \0-quoted spaces and \1-quoted tabs...
-
     _rectify_args();
 
     # Check exclusive variables, variable constraints and fill in defaults...
-
     _verify_args($all_args_ref);
 
     # Clean up @$args since everything must have been parsed
- 
     @$args = ();
 
     # Clean up %ARGV
-
     for my $arg_name ( keys %ARGV ) {
 
         # Flatten non-repeatables...
