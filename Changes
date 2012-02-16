@@ -1,5 +1,8 @@
 Revision history for Getopt-Euclid
 
+x.x.x
+  - Removed extraneous \E (patch by Todd Rinaldo)
+
 0.3.4
   - New standard argument --podfile to write the manual in a .pod file
   - Fixed issue where the NAME and VERSION sections appeared as a verbatim

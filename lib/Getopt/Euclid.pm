@@ -492,10 +492,10 @@ sub _process_prog_pod {
     $usage .= "       $SCRIPT_NAME --version\n";
 
     # Help message
-    $help  = "=head1 \L\uUsage:\E\E\n\n$usage\n";
-    $help .= "=head1 \L\u$req_name:\E\E\n\n$required\n\n"
+    $help  = "=head1 \L\uUsage:\E\n\n$usage\n";
+    $help .= "=head1 \L\u$req_name:\E\n\n$required\n\n"
       if ( $req_name || q{} ) =~ /\S/;
-    $help .= "=head1 \L\u$opt_name:\E\E\n\n$options\n\n"
+    $help .= "=head1 \L\u$opt_name:\E\n\n$options\n\n"
       if ( $opt_name || q{} ) =~ /\S/;
 
     $usage  = "Usage:\n".$usage;
