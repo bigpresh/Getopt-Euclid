@@ -194,7 +194,14 @@ sub process_args {
 
     # Run matcher...
     my $argv = 
-      join( q{ }, map { my $arg = $_; $arg =~ tr/ \t/\0\1/; $arg } @$args );
+      join( q{ },
+        map {
+          my $arg = $_;
+          my ($num_replaced) = ($arg =~ tr/ \t/\0\1/);
+          #####$arg = '"'.$arg.'"' if $num_replaced >= 1;
+          $arg
+        } @$args
+      );
 
     my $all_args_ref = { %options_hash, %requireds_hash };
     if ( my $error = _doesnt_match( $matcher, $argv, $all_args_ref ) ) {
@@ -213,7 +220,7 @@ sub process_args {
     ) if @missing;
 
     # Back-translate \0-quoted spaces and \1-quoted tabs...
-    _rectify_args();
+    _rectify_all_args();
 
     # Check exclusive variables, variable constraints and fill in defaults...
     _verify_args($all_args_ref);
@@ -733,30 +740,38 @@ sub _doesnt_match {
     return;    # No error
 }
 
-sub _rectify_args {
+sub _rectify_all_args {
     for my $arg_list ( values %ARGV ) {
         for my $arg ( @{$arg_list} ) {
             if ( ref $arg eq 'HASH' ) {
                 for my $var ( values %{$arg} ) {
                     if ( ref $var eq 'ARRAY' ) {
-                        tr/\0\1/ \t/ for @{$var};
+                        $var = [ map { _rectify_arg($_) } @{$var} ];
                     }
                     else {
-                        tr/\0\1/ \t/ for $var;
+                        $var = _rectify_arg($var);
                     }
                 }
             }
             else {
                 if ( ref $arg eq 'ARRAY' ) {
-                    tr/\0\1/ \t/ for @{$arg};
+                    $arg = [ map { _rectify_arg($_) } @{$arg} ];
                 }
                 else {
-                    tr/\0\1/ \t/ for $arg;
+                    $arg = _rectify_arg($arg);
                 }
             }
         }
     }
 }
+
+
+sub _rectify_arg {
+   my $arg = shift;
+   $arg =~ tr/\0\1/ \t/;
+   return $arg;
+}
+
 
 sub _verify_args {
     my ($arg_specs_ref) = @_;
