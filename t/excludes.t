@@ -31,12 +31,12 @@ $TIMEOUT = 7;
 
 # Validate first set of args (exclusive params)
 @argv = (
-    "-i   $INFILE",
-    "-out=", $OUTFILE,
-    "-lgth $LEN",
-    "size ${H}x${W}",
+    '-i', $INFILE,
+    "-out=$OUTFILE",
+    '-lgth', $LEN,
+    'size', "${H}x${W}",
     '-v',
-    "--timeout $TIMEOUT",
+    '--timeout', $TIMEOUT,
     7,
 );
 
