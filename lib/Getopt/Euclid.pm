@@ -193,16 +193,7 @@ sub process_args {
     };
 
     # Run matcher...
-    my $argv = 
-      join( q{ },
-        map {
-          my $arg = $_;
-          my ($num_replaced) = ($arg =~ tr/ \t/\0\1/);
-          #####$arg = '"'.$arg.'"' if $num_replaced >= 1;
-          $arg
-        } @$args
-      );
-
+    my $argv = join( q{ }, map { $_ = _escape_arg($_) } @$args );
     my $all_args_ref = { %options_hash, %requireds_hash };
     if ( my $error = _doesnt_match( $matcher, $argv, $all_args_ref ) ) {
         _bad_arglist($error);
@@ -767,9 +758,16 @@ sub _rectify_all_args {
 
 
 sub _rectify_arg {
-   my $arg = shift;
-   $arg =~ tr/\0\1/ \t/;
-   return $arg;
+    my $arg = shift;
+    my ($num_replaced) = ($arg =~ tr/\0\1/ \t/);
+    return $arg;
+}
+
+
+sub _escape_arg {
+    my $arg = shift;
+    my ($num_replaced) = ($arg =~ tr/ \t/\0\1/);
+    return $arg;
 }
 
 
@@ -944,17 +942,15 @@ sub _convert_to_regex {
         push @arg_variants, @{$args_ref->{$arg_name}->{variants}};
     }
     my $no_match = join('|',@arg_variants);
-    $no_match =~ s{([@#$^*()+{}?])}{\\$1}gxms; # Quotemeta specials
+    $no_match = _escape_specials($no_match);
     $no_match = '(?!'.$no_match.')';
-
 
     for my $arg_name ( keys %{$args_ref} ) {
         my $arg   = $args_ref->{$arg_name};
         my $regex = $arg_name;
 
         # Quotemeta specials...
-        $regex =~ s{([@#$^*()+{}?])}{\\$1}gxms;
-
+        $regex = _escape_specials($regex);
         $regex = "(?:$regex)";
 
         # Convert optionals...
@@ -965,26 +961,26 @@ sub _convert_to_regex {
 
 
         # Set the matcher
-        $regex =~ s{ < (.*?) >(\.\.\.|) }
-                   { my ($var_name, $var_rep) = ($1, $2);
-                     $var_name =~ s/(\s+)\[\\s\\0\\1]\*/$1/gxms;
-                     my $type = $arg->{var}{$var_name}{type} || q{};
-                     $arg->{placeholders}->{$var_name} = undef;
-                     my $matcher = $type =~ m{\A\s*/.*/\s*\z}xms
-                                        ? eval "qr$type"
-                                        : $STD_MATCHER_FOR{ $type }
-                         or _fail("Unknown type ($type) in specification: $arg_name");
-                     $var_rep              ? "(?:[\\s\\0\\1]*$no_match($matcher)(?{push \@{(\$ARGV{q{$arg_name}}||=[{}])->[-1]{q{$var_name}}}, \$^N}))+"
-                     :
-                     "(?:($matcher)(?{(\$ARGV{q{$arg_name}}||=[{}])->[-1]{q{$var_name}} = \$^N}))"
-                   }gexms
-          or do {
-            $regex .= "(?{(\$ARGV{q{$arg_name}}||=[{}])->[-1]{q{}} = 1})";
-          };
+        $regex =~
+            s{ < (.*?) >(\.\.\.|) }
+             { my ($var_name, $var_rep) = ($1, $2);
+               $var_name =~ s/(\s+)\[\\s\\0\\1]\*/$1/gxms;
+               my $type = $arg->{var}{$var_name}{type} || q{};
+               $arg->{placeholders}->{$var_name} = undef;
+               my $matcher =
+                   $type =~ m{\A\s*/.*/\s*\z}xms
+                   ? eval "qr$type"
+                   : $STD_MATCHER_FOR{ $type }
+                   or _fail("Unknown type ($type) in specification: $arg_name");
+               $var_rep ? "(?:[\\s\\0\\1]*$no_match($matcher)(?{push \@{(\$ARGV{q{$arg_name}}||=[{}])->[-1]{q{$var_name}}}, \$^N}))+"
+                        : "(?:($matcher)(?{(\$ARGV{q{$arg_name}}||=[{}])->[-1]{q{$var_name}} = \$^N}))"
+             }gexms
+             or do {
+                 $regex .= "(?{(\$ARGV{q{$arg_name}}||=[{}])->[-1]{q{}} = 1})";
+             };
 
         if ( $arg->{is_repeatable} ) {
-            $arg->{matcher} =
-"$regex (?:(?<!\\w)|(?!\\w)) (?{push \@{\$ARGV{q{$arg_name}}}, {} })";
+            $arg->{matcher} = "$regex (?:(?<!\\w)|(?!\\w)) (?{push \@{\$ARGV{q{$arg_name}}}, {} })";
         }
         else {
             $arg->{matcher} = "(??{exists\$ARGV{q{$arg_name}}?'(?!)':''}) "
@@ -996,21 +992,30 @@ sub _convert_to_regex {
         }
 
         # Set the generic matcher
-        $generic =~ s{ < (.*?) > }
-                     { my $var_name = $1;
-                       $var_name =~ s/(\s+)\[\\s\\0\\1]\*/$1/gxms;
-                       my $type = $arg->{var}{$var_name}{type} || q{};
-                       my $type_error = $arg->{var}{$var_name}{type_error} || q{};
-                       my $matcher = $type =~ m{\A\s*/.*/\s*\z}xms
-                                        ? eval "qr$type"
-                                        : $STD_MATCHER_FOR{ $type };
-                       "(?:($matcher|([^\\s\\0\\1]+)"
-                       . "(?{\$bad_type ||= "
-                       . "{arg=>q{$arg_name},type=>q{$type},type_error=>q{$type_error}, var=>q{<$var_name>},val=>\$^N};})))"
-                     }gexms;
+        $generic =~
+            s{ < (.*?) > }
+             { my $var_name = $1;
+               $var_name =~ s/(\s+)\[\\s\\0\\1]\*/$1/gxms;
+               my $type = $arg->{var}{$var_name}{type} || q{};
+               my $type_error = $arg->{var}{$var_name}{type_error} || q{};
+               my $matcher = $type =~ m{\A\s*/.*/\s*\z}xms
+                                ? eval "qr$type"
+                                : $STD_MATCHER_FOR{ $type };
+               "(?:($matcher|([^\\s\\0\\1]+)"
+               . "(?{\$bad_type ||= "
+               . "{arg=>q{$arg_name},type=>q{$type},type_error=>q{$type_error}, var=>q{<$var_name>},val=>\$^N};})))"
+             }gexms;
         $arg->{generic_matcher} = $generic;
     }
     return;
+}
+
+
+sub _escape_specials {
+    # Escape quotemeta special characters
+    my $arg = shift;
+    $arg =~ s{([@#$^*()+{}?])}{\\$1}gxms;
+    return $arg;
 }
 
 
