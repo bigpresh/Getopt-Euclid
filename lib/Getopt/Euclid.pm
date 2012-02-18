@@ -193,7 +193,18 @@ sub process_args {
     };
 
     # Run matcher...
+
+    ####
+    use Data::Dumper; print "ARGV: ".Dumper($args);
+    ####
+
     my $argv = join( q{ }, map { $_ = _escape_arg($_) } @$args );
+
+    ####
+    print "argv: '$argv'\n";
+    print "matcher: $matcher\n";
+    ####
+
     my $all_args_ref = { %options_hash, %requireds_hash };
     if ( my $error = _doesnt_match( $matcher, $argv, $all_args_ref ) ) {
         _bad_arglist($error);
@@ -657,6 +668,7 @@ sub _process_euclid_specs {
 
 }
 
+
 sub _process_constraints {
     # In constraints that use a variable, replace the variable name by its value
     for my $hash (\%requireds_hash, \%options_hash) {
@@ -675,6 +687,7 @@ sub _process_constraints {
     $constraints_processed = 1;
 }
 
+
 sub _minimize_name {
     my ($name) = @_;
     $name =~ s{[][]}{}gxms;                      # remove all square brackets
@@ -682,6 +695,7 @@ sub _minimize_name {
     $name =~ s{-}{_}gxms;
     return $name;
 }
+
 
 sub _minimize_entries_of {
     my ($arg_ref) = @_;
@@ -695,8 +709,8 @@ sub _minimize_entries_of {
     return;
 }
 
-# Do match, recursively trying to expand cuddles...
 
+# Do match, recursively trying to expand cuddles...
 sub _doesnt_match {
     use re 'eval';
     my ( $matcher, $argv, $arg_specs_ref ) = @_;
@@ -706,6 +720,11 @@ sub _doesnt_match {
     %ARGV = ();
 
     $argv =~ m{\A (?: \s* $matcher )* \s* \z}xms;
+
+    ####
+    use Data::Dumper;
+    print ">>>1 ".Dumper(\%ARGV);
+    ####
 
     for my $error (@errors) {
         if ( $error =~ m/\A ((\W) (\w) (\w+))/xms ) {
@@ -728,8 +747,39 @@ sub _doesnt_match {
         return "Unknown argument: $error";
     }
 
+    ####
+    use Data::Dumper;
+    print ">>>2 ".Dumper(\%ARGV);
+    ####
+
+
     return;    # No error
 }
+
+
+sub _escape_arg {
+    my $arg = shift;
+    my ($num_replaced) = ($arg =~ tr/ \t/\0\1/);
+    ####
+    #$arg = '"'.$arg.'"' if $num_replaced >= 1;
+    # Also, don't do this if there is a cuddle.
+    # We don't want
+    #    CLI: -f"1 3"
+    #    to become this internally: "-f1 3"
+    ####
+    return $arg;
+}
+
+
+sub _rectify_arg {
+    my $arg = shift;
+    my ($num_replaced) = ($arg =~ tr/\0\1/ \t/);
+    ####
+    #$arg =~ s/^"(.*)"$/$1/ if $num_replaced >= 1;
+    ####
+    return $arg;
+}
+
 
 sub _rectify_all_args {
     for my $arg_list ( values %ARGV ) {
@@ -754,20 +804,6 @@ sub _rectify_all_args {
             }
         }
     }
-}
-
-
-sub _rectify_arg {
-    my $arg = shift;
-    my ($num_replaced) = ($arg =~ tr/\0\1/ \t/);
-    return $arg;
-}
-
-
-sub _escape_arg {
-    my $arg = shift;
-    my ($num_replaced) = ($arg =~ tr/ \t/\0\1/);
-    return $arg;
 }
 
 
@@ -1014,7 +1050,7 @@ sub _convert_to_regex {
 sub _escape_specials {
     # Escape quotemeta special characters
     my $arg = shift;
-    $arg =~ s{([@#$^*()+{}?])}{\\$1}gxms;
+    $arg =~ s{([@#$^*()+{}?])}{\\$1}gxms; ####?
     return $arg;
 }
 
@@ -1091,9 +1127,11 @@ sub _get_variants {
     return keys %variants;
 }
 
+
 sub _longestname {
     return ( sort { length $a <=> length $b || $a cmp $b } @_ )[-1];
 }
+
 
 sub _export_var {
     my ( $prefix, $key, $value ) = @_;
@@ -1103,6 +1141,7 @@ sub _export_var {
     no strict 'refs';
     *{"$callpkg\::$export_as"} = ( ref $value ) ? $value : \$value;
 }
+
 
 # Utility sub to factor out hash key aliasing...
 sub _make_equivalent {
@@ -1116,6 +1155,7 @@ sub _make_equivalent {
 
     return;
 }
+
 
 # Report problems in specification...
 sub _fail {
