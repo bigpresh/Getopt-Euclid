@@ -2217,6 +2217,12 @@ passed to a POD converter because, among other things, any default value
 specified is interpolated and replaced by its value in the .pod file, contrary
 to in the program's .pl file.
 
+If you want to automate the creation of a POD file during the build process, you
+can edit you Makefile.PL or Build.PL file and add these lines:
+
+   my @args = ($^X, '-Ilib', '/path/to/script', '--podfile');
+   system(@args) == 0 or die "System call to '@args' failed:\n$?\n";
+
 =item --version  version()
 
 The --version argument causes the program to print the version number of the
