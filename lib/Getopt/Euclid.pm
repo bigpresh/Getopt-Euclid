@@ -194,18 +194,7 @@ sub process_args {
     };
 
     # Run matcher...
-
-    ####
-    #use Data::Dumper; print "ARGV: ".Dumper($args);
-    ####
-
     my $argv = join( q{ }, map { $_ = _escape_arg($_) } @$args );
-
-    ####
-    print "argv: '$argv'\n";
-    print "matcher: $matcher\n";
-    ####
-
     my $all_args_ref = { %options_hash, %requireds_hash };
     if ( my $error = _doesnt_match( $matcher, $argv, $all_args_ref ) ) {
         _bad_arglist($error);
@@ -546,11 +535,7 @@ sub _process_euclid_specs {
         while ( $info =~ s{^ \s* false \s*[:=] \s* ([^\n]*)}{}xms ) {
             my $regex = $1;
             1 while $regex =~ s/ \[ ([^]]*) \] /(?:$1)?/gxms;
-
-            ####
             $regex =~ s/ (\s+) /$1.'[\\s\\0\\1]*'/egxms;
-            ####
-
             push @false_vals, $regex;
         }
         if (@false_vals) {
@@ -722,11 +707,6 @@ sub _doesnt_match {
     # Note that the matcher needs the pragma: use re 'eval';
     $argv =~ m{\A (?: \s* $matcher )* \s* \z}xms;
 
-    ####
-    #use Data::Dumper;
-    #print ">>>1 ".Dumper(\%ARGV);
-    ####
-
     # Report errors in passed arguments
     for my $error (@errors) {
         if ( $error =~ m/\A ((\W) (\w) (\w+))/xms ) {
@@ -749,12 +729,6 @@ sub _doesnt_match {
         return "Unknown argument: $error";
     }
 
-    ####
-    #use Data::Dumper;
-    #print ">>>2 ".Dumper(\%ARGV);
-    ####
-
-
     return;    # No error
 }
 
@@ -762,13 +736,6 @@ sub _doesnt_match {
 sub _escape_arg {
     my $arg = shift;
     my ($num_replaced) = ($arg =~ tr/ \t/\0\1/);
-    ####
-    #$arg = '"'.$arg.'"' if $num_replaced >= 1;
-    # Also, don't do this if there is a cuddle.
-    # We don't want
-    #    CLI: -f"1 3"
-    #    to become this internally: "-f1 3"
-    ####
     return $arg;
 }
 
@@ -776,9 +743,6 @@ sub _escape_arg {
 sub _rectify_arg {
     my $arg = shift;
     my ($num_replaced) = ($arg =~ tr/\0\1/ \t/);
-    ####
-    #$arg =~ s/^"(.*)"$/$1/ if $num_replaced >= 1;
-    ####
     return $arg;
 }
 
@@ -973,19 +937,14 @@ sub _convert_to_regex {
     my ($args_ref) = @_;
 
     # Regexp to capture the start of a new argument
+    my $no_esc_ws = '(?!\0|\1)'; # no escaped whitespaces
     my @arg_variants;
     while ( my ($arg_name, $arg_specs) = each %{$args_ref} ) {
         push @arg_variants, @{$arg_specs->{variants}};
     }
     my $no_match = join('|',@arg_variants);
     $no_match = _escape_specials($no_match);
-    #### $no_match = '(?!'.$no_match.')';
-    $no_match = '(?!(?:'.$no_match.')(?!\0|\1))';
-
-    ####
-    use Data::Dumper;
-    print "Args_ref: ".Dumper($args_ref);
-    ####
+    $no_match = '(?!(?:'.$no_match.')'.$no_esc_ws.')';
 
     while ( my ($arg_name, $arg) = each %{$args_ref} ) {
         my $regex = $arg_name;
@@ -996,24 +955,14 @@ sub _convert_to_regex {
 
         # Convert optionals...
         1 while $regex =~ s/ \[ ([^]]*) \] /(?:$1)?/gxms;
-
-        ####
-        #$regex =~ s/ (\s+) /$1.'[\\s\\0\\1]*'/egxms;
-        $regex =~ s/ (\s+) /$1.'\s*(?!\0|\1)'/egxms;
-        ####
-
+        $regex =~ s/ (\s+) /$1.'\s*'.$no_esc_ws/egxms;
         my $generic = $regex;
-
 
         # Set the matcher
         $regex =~
             s{ < (.*?) >(\.\.\.|) }
              { my ($var_name, $var_rep) = ($1, $2);
-     
-               ####
                $var_name =~ s/(\s+)\[\\s\\0\\1]\*/$1/gxms;
-               ####
-
                my $type = $arg->{var}{$var_name}{type} || q{};
                $arg->{placeholders}->{$var_name} = undef;
                my $matcher =
@@ -1021,22 +970,17 @@ sub _convert_to_regex {
                    ? eval "qr$type"
                    : $STD_MATCHER_FOR{ $type }
                    or _fail("Unknown type ($type) in specification: $arg_name");
-               $var_rep
-                   ####
-                   ? "(?:[\\s\\0\\1]*$no_match($matcher)(?{push \@{(\$ARGV{q{$arg_name}}||=[{}])->[-1]{q{$var_name}}}, \$^N}))+"
-                   #? "(?:[\\s\\0\\1]*$no_match($matcher)(?{push \@{(\$ARGV{q{$arg_name}}||=[{}])->[-1]{q{$var_name}}}, \$^N}))+"
-                   ####
-                   : "(?:($matcher)(?{(\$ARGV{q{$arg_name}}||=[{}])->[-1]{q{$var_name}} = \$^N}))"
+               $var_rep ?
+                 "(?:[\\s\\0\\1]*$no_match($matcher)(?{push \@{(\$ARGV{q{$arg_name}}||=[{}])->[-1]{q{$var_name}}}, \$^N}))+"
+                 : "(?:($matcher)(?{(\$ARGV{q{$arg_name}}||=[{}])->[-1]{q{$var_name}} = \$^N}))";
              }gexms
              or do {
                  $regex .= "(?{(\$ARGV{q{$arg_name}}||=[{}])->[-1]{q{}} = 1})";
              };
 
-        ####
         if ( $arg->{is_repeatable} ) {
             $arg->{matcher} = "$regex (?:(?<!\\w)|(?!\\w)) (?{push \@{\$ARGV{q{$arg_name}}}, {} })";
         }
-        ####
         else {
             $arg->{matcher} = "(??{exists\$ARGV{q{$arg_name}}?'(?!)':''}) "
               . (
@@ -1069,7 +1013,7 @@ sub _convert_to_regex {
 sub _escape_specials {
     # Escape quotemeta special characters
     my $arg = shift;
-    $arg =~ s{([@#$^*()+{}?])}{\\$1}gxms; ####?
+    $arg =~ s{([@#$^*()+{}?])}{\\$1}gxms;
     return $arg;
 }
 
