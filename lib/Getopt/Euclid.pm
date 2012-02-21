@@ -979,7 +979,8 @@ sub _convert_to_regex {
     }
     my $no_match = join('|',@arg_variants);
     $no_match = _escape_specials($no_match);
-    $no_match = '(?!'.$no_match.')';
+    #### $no_match = '(?!'.$no_match.')';
+    $no_match = '(?!(?:'.$no_match.')(?!\0|\1))';
 
     ####
     use Data::Dumper;
@@ -1020,8 +1021,12 @@ sub _convert_to_regex {
                    ? eval "qr$type"
                    : $STD_MATCHER_FOR{ $type }
                    or _fail("Unknown type ($type) in specification: $arg_name");
-               $var_rep ? "(?:[\\s\\0\\1]*$no_match($matcher)(?{push \@{(\$ARGV{q{$arg_name}}||=[{}])->[-1]{q{$var_name}}}, \$^N}))+"
-                        : "(?:($matcher)(?{(\$ARGV{q{$arg_name}}||=[{}])->[-1]{q{$var_name}} = \$^N}))"
+               $var_rep
+                   ####
+                   ? "(?:[\\s\\0\\1]*$no_match($matcher)(?{push \@{(\$ARGV{q{$arg_name}}||=[{}])->[-1]{q{$var_name}}}, \$^N}))+"
+                   #? "(?:[\\s\\0\\1]*$no_match($matcher)(?{push \@{(\$ARGV{q{$arg_name}}||=[{}])->[-1]{q{$var_name}}}, \$^N}))+"
+                   ####
+                   : "(?:($matcher)(?{(\$ARGV{q{$arg_name}}||=[{}])->[-1]{q{$var_name}} = \$^N}))"
              }gexms
              or do {
                  $regex .= "(?{(\$ARGV{q{$arg_name}}||=[{}])->[-1]{q{}} = 1})";
