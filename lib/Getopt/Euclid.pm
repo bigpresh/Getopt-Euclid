@@ -186,7 +186,7 @@ sub process_args {
     *_bad_arglist = sub {
         my (@msg) = @_;
         my $msg = join q{}, @msg;
-        $msg =~ tr/\0\1/ \t/;
+        $msg = _rectify_arg($msg);
         $msg =~ s/\n?\z/\n/xms;
         warn "$msg(Try this for usage help : $SCRIPT_NAME --help)\n".
                  "(Try this for full manual: $SCRIPT_NAME --man )\n\n";
@@ -715,7 +715,7 @@ sub _minimize_entries_of {
 sub _doesnt_match {
     my ( $matcher, $argv, $arg_specs_ref ) = @_;
 
-    our @errors;
+    our @errors; # 'our' instead of 'my' because it's needed for the re pragma
     local @errors = ();
     %ARGV = ();
 
