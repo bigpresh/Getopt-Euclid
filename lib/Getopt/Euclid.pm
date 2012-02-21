@@ -6,6 +6,7 @@ use warnings;
 use strict;
 use 5.005000; # perl 5.5.0
 use Carp;
+use re 'eval'; # for matcher regex
 use Pod::Select;
 use Pod::PlainText;
 use File::Basename;
@@ -712,13 +713,14 @@ sub _minimize_entries_of {
 
 # Do match, recursively trying to expand cuddles...
 sub _doesnt_match {
-    use re 'eval';
     my ( $matcher, $argv, $arg_specs_ref ) = @_;
 
     our @errors;
     local @errors = ();
     %ARGV = ();
 
+    # Match arguments, populate %ARGV and @errors
+    # Note that the matcher needs the pragma: use re 'eval';
     $argv =~ m{\A (?: \s* $matcher )* \s* \z}xms;
 
     ####
@@ -726,6 +728,7 @@ sub _doesnt_match {
     print ">>>1 ".Dumper(\%ARGV);
     ####
 
+    # Report errors in passed arguments
     for my $error (@errors) {
         if ( $error =~ m/\A ((\W) (\w) (\w+))/xms ) {
             my ( $bundle, $marker, $firstchar, $chars ) = ( $1, $2, $3, $4 );
@@ -1015,9 +1018,11 @@ sub _convert_to_regex {
                  $regex .= "(?{(\$ARGV{q{$arg_name}}||=[{}])->[-1]{q{}} = 1})";
              };
 
+        ####
         if ( $arg->{is_repeatable} ) {
             $arg->{matcher} = "$regex (?:(?<!\\w)|(?!\\w)) (?{push \@{\$ARGV{q{$arg_name}}}, {} })";
         }
+        ####
         else {
             $arg->{matcher} = "(??{exists\$ARGV{q{$arg_name}}?'(?!)':''}) "
               . (
