@@ -202,8 +202,8 @@ sub process_args {
     my $argv = join( q{ }, map { $_ = _escape_arg($_) } @$args );
 
     ####
-    #print "argv: '$argv'\n";
-    #print "matcher: $matcher\n";
+    print "argv: '$argv'\n";
+    print "matcher: $matcher\n";
     ####
 
     my $all_args_ref = { %options_hash, %requireds_hash };
@@ -546,7 +546,11 @@ sub _process_euclid_specs {
         while ( $info =~ s{^ \s* false \s*[:=] \s* ([^\n]*)}{}xms ) {
             my $regex = $1;
             1 while $regex =~ s/ \[ ([^]]*) \] /(?:$1)?/gxms;
+
+            ####
             $regex =~ s/ (\s+) /$1.'[\\s\\0\\1]*'/egxms;
+            ####
+
             push @false_vals, $regex;
         }
         if (@false_vals) {
@@ -591,7 +595,7 @@ sub _process_euclid_specs {
                 }
                 elsif ( length $constraint ) {
                     $arg->{var}{$var}{constraint_desc} = $constraint;
-                    $arg->{var}{$var}{constraint} =
+                    $arg->{var}{$var}{constraint} = 
                       eval "sub{ \$_[0] $constraint }"
                       or _fail("Invalid .type constraint: $spec\n($@)");
                 }
@@ -977,6 +981,11 @@ sub _convert_to_regex {
     $no_match = _escape_specials($no_match);
     $no_match = '(?!'.$no_match.')';
 
+    ####
+    use Data::Dumper;
+    print "Args_ref: ".Dumper($args_ref);
+    ####
+
     while ( my ($arg_name, $arg) = each %{$args_ref} ) {
         my $regex = $arg_name;
 
@@ -988,7 +997,8 @@ sub _convert_to_regex {
         1 while $regex =~ s/ \[ ([^]]*) \] /(?:$1)?/gxms;
 
         ####
-        $regex =~ s/ (\s+) /$1.'[\\s\\0\\1]*'/egxms;
+        #$regex =~ s/ (\s+) /$1.'[\\s\\0\\1]*'/egxms;
+        $regex =~ s/ (\s+) /$1.'\s*(?!\0|\1)'/egxms;
         ####
 
         my $generic = $regex;
@@ -998,7 +1008,11 @@ sub _convert_to_regex {
         $regex =~
             s{ < (.*?) >(\.\.\.|) }
              { my ($var_name, $var_rep) = ($1, $2);
+     
+               ####
                $var_name =~ s/(\s+)\[\\s\\0\\1]\*/$1/gxms;
+               ####
+
                my $type = $arg->{var}{$var_name}{type} || q{};
                $arg->{placeholders}->{$var_name} = undef;
                my $matcher =
