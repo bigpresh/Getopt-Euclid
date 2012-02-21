@@ -2,6 +2,7 @@ Revision history for Getopt-Euclid
 
 x.x.x
   - Removed extraneous \E (patch by Todd Rinaldo)
+  - Better handling of quoted arguments (RT bug #49525, reported by Ken Galinsky)
 
 0.3.4
   - New standard argument --podfile to write the manual in a .pod file
