@@ -1980,7 +1980,7 @@ informative to users.
 
     =for Euclid:
         postcode.type:  /$RE{zip}{France}/
-        postcode.error: <postcode> myst be a valid ZIP code
+        postcode.type.error: <postcode> must be a valid ZIP code
 
 =head2 Placeholder type errors
 
