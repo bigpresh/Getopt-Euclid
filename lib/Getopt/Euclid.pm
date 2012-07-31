@@ -284,10 +284,12 @@ sub process_args {
         }
     }
 
+
     if ($minimal_keys) {
         _minimize_entries_of( \%ARGV );
     }
 
+    return 1;
 }
 
 # # # # # # # # Utility subs # # # # # # # #
@@ -507,6 +509,7 @@ sub _process_prog_pod {
 
     $matcher = '(?:' . $matcher . ')';
 
+    return 1;
 }
 
 
@@ -686,7 +689,7 @@ sub _minimize_entries_of {
     my ($arg_ref) = @_;
     return if ref $arg_ref ne 'HASH';
 
-    while ( my ($old_key) = each %{$arg_ref} ) {
+    for my $old_key (keys %$arg_ref) {
         my $new_key = _minimize_name($old_key);
         $arg_ref->{$new_key} = delete $arg_ref->{$old_key};
     }
