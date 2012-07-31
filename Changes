@@ -1,6 +1,6 @@
 Revision history for Getopt-Euclid
 
-0.xx
+0.3.6
   - Fixed occasional non-minimized entry when using :minimal_keys specifier
 
 0.3.5
