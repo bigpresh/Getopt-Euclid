@@ -2530,7 +2530,7 @@ workaround may be to move the POD to a __DATA__ section or a separate .pod file.
 
 Please report any bugs or feature requests to
 C<bug-getopt-euclid@rt.cpan.org>, or through the web interface at
-L<http://rt.cpan.org>.
+L<https://rt.cpan.org/Public/Dist/Display.html?Name=Getopt-Euclid>.
 
 Getopt::Euclid has a development repository on Sourceforge.net at
 L<http://sourceforge.net/scm/?type=git&group_id=259291> in which the code is

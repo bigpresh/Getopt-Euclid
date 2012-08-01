@@ -1,5 +1,8 @@
 Revision history for Getopt-Euclid
 
+0.x
+  - Fixed bug tracker URL (credits to Kent Fredric)
+
 0.3.6
   - Fixed occasional non-minimized entry when using :minimal_keys specifier
 
