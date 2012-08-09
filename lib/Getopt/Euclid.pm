@@ -12,7 +12,7 @@ use Pod::PlainText;
 use File::Basename;
 use File::Spec::Functions qw(splitpath catpath catfile);
 use List::Util qw( first );
-use Text::Balanced qw(extract_bracketed extract_variable extract_multiple);
+use Text::Balanced qw(extract_multiple extract_bracketed extract_variable extract_delimited);
 
 
 # Set some module variables
@@ -562,14 +562,7 @@ sub _process_euclid_specs {
             }
             elsif ( $field eq 'type' ) {
 
-                # Restore fully-qualified name to variables:
-                #    $x          becomes  $main::x
-                #    $::x        becomes  $main::x
-                #    $Package::x stays as $Package::x
-                $val =~ s/([\$\@\%])(::[a-z0-9]+)/$1main$2/gi;                
-                if ($val !~ m/::/) {
-                  $val =~ s/([\$\@\%])/$1main::/gi;
-                }
+                $val = _qualify_variables_fully( $val );
 
                 my ( $matchtype, $comma, $constraint ) =
                   $val =~ m{(/(?:\.|.)+/ | [^,\s]+)\s*(?:(,))?\s*(.*)}xms;
@@ -654,6 +647,42 @@ sub _process_euclid_specs {
         }
     }
 
+}
+
+
+sub _qualify_variables_fully {
+    # Restore fully-qualified name to variables:
+    #    $x          becomes  $main::x
+    #    $::x        becomes  $main::x
+    #    $Package::x stays as $Package::x
+    #    /^asdf$/    stays as /^asdf$/
+    #    '$10'       stays as '$10'
+    my ($val) = @_;
+    my $new_val;
+    for my $section (extract_multiple($val,[{Quoted=>sub{extract_delimited($_[0])}}],undef,0)) {
+        if (not ref $section) {
+            # A non-quoted section... may contain variables to fix
+            for my $var_name (extract_multiple($section,[sub{extract_variable($_[0],'')}],undef,1)) {
+                my $sigil = substr $var_name, 0, 1, '';
+                my @fields = split '::', $var_name;
+                shift @fields if $fields[0] eq '';
+                # Skip fully qualified names, such as '$Package::x'
+                next if scalar @fields > 1;
+                # Skip special or invalid names. Must start with underscore or a letter
+                my $new_name = $fields[0];
+                next if not $new_name =~ m/^[_a-z]/i; 
+                # Substitute non-fully qualified variable name, such as '$x' or '$::x'
+                $new_name = $sigil.'main::'.$new_name;
+                $var_name = quotemeta( $sigil.$var_name );
+                $section =~ s/$var_name/$new_name/g;
+            }
+            $new_val .= $section;
+        } else {
+            # A quoted section.
+            $new_val .= $$section;
+        }
+    }
+    return $new_val;
 }
 
 
