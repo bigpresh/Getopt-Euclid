@@ -662,27 +662,38 @@ sub _qualify_variables_fully {
     for my $section (extract_multiple($val,[{Quoted=>sub{extract_delimited($_[0])}}],undef,0)) {
         if (not ref $section) {
             # A non-quoted section... may contain variables to fix
-            for my $var_name (extract_multiple($section,[sub{extract_variable($_[0],'')}],undef,1)) {
+            for my $var_name ( @{_get_variable_names($section)} ) {
                 my $sigil = substr $var_name, 0, 1, '';
                 my @fields = split '::', $var_name;
                 shift @fields if $fields[0] eq '';
                 # Skip fully qualified names, such as '$Package::x'
                 next if scalar @fields > 1;
-                # Skip special or invalid names. Must start with underscore or a letter
-                my $new_name = $fields[0];
-                next if not $new_name =~ m/^[_a-z]/i; 
                 # Substitute non-fully qualified variable name, such as '$x' or '$::x'
-                $new_name = $sigil.'main::'.$new_name;
+                my $new_name = $sigil.'main::'.$fields[0];
                 $var_name = quotemeta( $sigil.$var_name );
                 $section =~ s/$var_name/$new_name/g;
             }
             $new_val .= $section;
         } else {
-            # A quoted section.
+            # A quoted section, to keep as-is
             $new_val .= $$section;
         }
     }
     return $new_val;
+}
+
+
+sub _get_variable_names {
+    # Get the variables names (as an arrayref) found in a string.
+    my ($string) = @_;
+    my $var_names = [];
+    for my $var_name (extract_multiple($string,[sub{extract_variable($_[0],'')}],undef,1)) {
+        # Skip special or invalid names.
+        # Name must start with underscore or a letter, e.g. '$t' or '@_'
+        next if not $var_name =~ m/^.[_a-z]/i; 
+        push @$var_names, $var_name;
+    }
+    return $var_names;
 }
 
 
@@ -693,9 +704,9 @@ sub _process_constraints {
             while ( my ($var_name, $var_props) = each %{$props->{'var'}} ) {
                 my $constraint = $var_props->{'constraint_desc'};
                 next if not defined $constraint;
-                for my $var_name (extract_multiple($constraint,[sub{extract_variable($_[0],'')}],undef,1)) {
+                for my $var_name ( @{_get_variable_names($constraint)} ) {
                     my $var_val = eval $var_name;
-                    $var_name = quotemeta($var_name);
+                    $var_name = quotemeta $var_name;
                     $var_props->{'constraint_desc'} =~ s/$var_name/$var_val/;
                 }
             }
