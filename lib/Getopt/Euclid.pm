@@ -188,8 +188,8 @@ sub process_args {
         my $msg = join q{}, @msg;
         $msg = _rectify_arg($msg);
         $msg =~ s/\n?\z/\n/xms;
-        warn "$msg(Try this for usage help : $SCRIPT_NAME --help)\n".
-                 "(Try this for full manual: $SCRIPT_NAME --man )\n\n";
+        warn "$msg\nTry this for usage help: $SCRIPT_NAME --help\n".
+                   "Or this for full manual: $SCRIPT_NAME --man\n\n";
         exit 2;    # Traditional "bad arg list" value
     };
 
@@ -479,7 +479,10 @@ sub _process_prog_pod {
     # Usage message
     $usage  = "       $SCRIPT_NAME $arg_summary\n";
     $usage .= "       $SCRIPT_NAME --help\n";
+    $usage .= "       $SCRIPT_NAME --man\n";
+    $usage .= "       $SCRIPT_NAME --usage\n";
     $usage .= "       $SCRIPT_NAME --version\n";
+
 
     # Help message
     $help  = "=head1 \L\uUsage:\E\n\n$usage\n";

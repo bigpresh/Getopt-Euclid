@@ -23,6 +23,8 @@ my $help = <<EOS;
 
        insert_defaults.t -o= <out_file> -i <file> [options]
        insert_defaults.t --help
+       insert_defaults.t --man
+       insert_defaults.t --usage
        insert_defaults.t --version
 
 \=head1 Required arguments:

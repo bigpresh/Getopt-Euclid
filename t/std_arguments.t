@@ -121,6 +121,8 @@ my $help = <<EOS;
 
        std_arguments.t -o= <out_file> -i <file> [options]
        std_arguments.t --help
+       std_arguments.t --man
+       std_arguments.t --usage
        std_arguments.t --version
 
 \=head1 Required arguments:
@@ -193,6 +195,8 @@ my $usage = <<EOS;
 Usage:
        std_arguments.t -o= <out_file> -i <file> [options]
        std_arguments.t --help
+       std_arguments.t --man
+       std_arguments.t --usage
        std_arguments.t --version
 EOS
 
