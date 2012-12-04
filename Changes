@@ -1,6 +1,7 @@
 Revision history for Getopt-Euclid
 
 x.x.x
+  - Messages respect order of user options (fixes RT bug #81630)
   - Show --man and --usage in help message
 
 0.3.7
