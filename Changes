@@ -1,8 +1,9 @@
 Revision history for Getopt-Euclid
 
-x.x.x
+0.3.8
   - Messages respect order of user options (fixes RT bug #81630)
   - Show --man and --usage in help message
+  - Prevent a trailing whitespace in --help usage string
 
 0.3.7
   - Fixed too enthusiastic variable interpolation in Euclid specs (RT bug #78854)

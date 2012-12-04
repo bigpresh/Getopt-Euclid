@@ -1,6 +1,6 @@
 package Getopt::Euclid;
 
-use version; our $VERSION = version->declare('0.3.7');
+use version; our $VERSION = version->declare('0.3.8');
 
 use warnings;
 use strict;
@@ -1264,7 +1264,7 @@ Getopt::Euclid - Executable Uniform Command-Line Interface Descriptions
 
 =head1 VERSION
 
-This document describes Getopt::Euclid version 0.3.7
+This document describes Getopt::Euclid version 0.3.8
 
 =head1 SYNOPSIS
 
@@ -2280,6 +2280,10 @@ can edit you Makefile.PL or Build.PL file and add these lines:
 
    my @args = ($^X, '-Ilib', '/path/to/script', '--podfile');
    system(@args) == 0 or die "System call to '@args' failed:\n$?\n";
+
+If you use L<Module::Install> to bundle your script, you might be interested in
+using L<Module::Install::PodFromEuclid> to include the --podfile step into the
+installation process.
 
 =item --version  version()
 
