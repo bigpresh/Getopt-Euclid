@@ -109,7 +109,7 @@ This document refers to insert_defaults.t version 1.9.4
 
 \=head1 USAGE
 
-    insert_defaults.t -i <file> -o= <out_file> [options] 
+    insert_defaults.t -i <file> -o= <out_file> [options]
 
 \=head1 REQUIRED ARGUMENTS
 

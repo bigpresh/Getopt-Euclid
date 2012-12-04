@@ -29,7 +29,7 @@ This document refers to std_arguments.t version 1.9.4
 
 \=head1 USAGE
 
-    std_arguments.t -i <file> -o= <out_file> [options] 
+    std_arguments.t -i <file> -o= <out_file> [options]
 
 \=head1 REQUIRED ARGUMENTS
 

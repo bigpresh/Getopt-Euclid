@@ -461,7 +461,7 @@ sub _process_prog_pod {
     $arg_summary =~ s/\s+/ /gxms;
 
     $man =~ s{ ($HEAD_START $USAGE \s*) .*? (\s*) $HEAD_END }
-            {$1$SCRIPT_NAME $arg_summary $2}xms;
+            {$1$SCRIPT_NAME $arg_summary$2}xms;
 
     # Insert default values (if any) in the program's documentation
     $required = _insert_default_values(\%requireds_hash, \@requireds_arr);
