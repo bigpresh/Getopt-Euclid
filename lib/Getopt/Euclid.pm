@@ -833,6 +833,7 @@ sub _verify_args {
             }
         }
     }
+
     while ( my ($arg_name, $arg) = each %{$arg_specs_ref} ) {
         while ( my ($var_name, $var) = each %{$arg->{var}} ) {
             # Enforce placeholders that cannot be specified with others
@@ -854,7 +855,6 @@ sub _verify_args {
             }
         }
     }
-    undef %seen_vars;
 
     # Enforce constraints and fill in defaults...
   ARG:
@@ -937,10 +937,16 @@ sub _verify_args {
                 # Assign defaults (if necessary)...
                 my $arg_vars = $arg_specs->{var}->{$var};
                 next ARG
-                  if !exists $arg_vars->{default};
+                  if !exists $arg_vars->{default}; # no default specified
 
-                $ARGV{$arg_name}[0]{$var} =
-                  $arg_vars->{default};
+                # Omit default if it conflicts with a specified parameter
+                for my $excl_var ( @{$arg_specs->{var}->{$var}->{excludes}} ) {
+                    if (exists $seen_vars{$excl_var}) {
+                        next ARG;
+                    }
+                }
+
+                $ARGV{$arg_name}[0]{$var} = $arg_vars->{default};
             }
         }
     }

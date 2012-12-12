@@ -92,8 +92,8 @@ got_arg '-length' => 24;
 got_no_arg 'size';
 got_arg '--color' => 'red';
 got_no_arg '--other';
-use Data::Dumper; print Dumper(\%ARGV);
 got_arg '<step>' => 7;
+got_no_arg '-w';
 
 
 # Validate fourth set of args (more exclusive default values)
@@ -111,7 +111,9 @@ Getopt::Euclid->process_args(\@argv);
 got_arg '--color' => 'red';
 got_no_arg '--other';
 is_deeply $ARGV{size}, { h => $H, w => $W }  => 'Got expected value for size';
+got_no_arg '-l';
 got_arg '<step>' => 7;
+got_no_arg '-w';
 
 
 __END__
