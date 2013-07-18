@@ -22,7 +22,6 @@ my @pod_names;
 my $minimal_keys;
 my $vars_prefix;
 my $defer = 0;
-my $pod_file_msg = "# This file was generated dynamically by Getopt::Euclid. Do not edit it.";
 my $matcher;
 my %requireds;
 my %options;
@@ -31,6 +30,9 @@ my $man;     # --man     message
 my $help;    # --help    message
 my $usage;   # --usage   message
 my $version; # --version message
+
+my $skip_keyword = 'Getopt::Euclid'; # Ignore files with a first line containing this keyword.
+my $pod_file_msg = "# This file was generated dynamically by $skip_keyword. Do not edit it.";
 
 # Global variables
 our $SCRIPT_NAME;
@@ -509,7 +511,7 @@ sub _register_specs {
     };
     if ($minimal_keys) {
         my $minimal = _minimize_name($name);
-        croak "Internal error: minimalist mode caused arguments",
+        croak "Internal error: minimalist mode caused arguments ",
            "'$name' and '".$seen->{$minimal}."' to clash"
            if $seen->{$minimal};
         $seen->{$minimal} = $name;
@@ -1198,7 +1200,7 @@ sub _extract_pod {
               or croak "Could not open file $pod_file because $!";
             my $first_line = <$in>;
             chomp $first_line;
-            if ( not ($first_line eq $pod_file_msg) ) {
+            if ( not ($first_line =~ m/$skip_keyword/) ) {
                 # Do not use G::E auto-generated file; it lacks important stuff
                 print $pod_fh "$first_line\n";
                 print $pod_fh $_ while <$in>;    
