@@ -567,9 +567,7 @@ sub _process_euclid_specs {
                 $arg->{var}{$var}{type_error} = $val;
             }
             elsif ( $field eq 'type' ) {
-
                 $val = _qualify_variables_fully( $val );
-
                 my ( $matchtype, $comma, $constraint ) =
                   $val =~ m{(/(?:\.|.)+/ | [^,\s]+)\s*(?:(,))?\s*(.*)}xms;
                 $arg->{var}{$var}{type} = $matchtype;
@@ -597,6 +595,7 @@ sub _process_euclid_specs {
 
             }
             elsif ( ($field eq 'default') || ($field eq 'opt_default') ) {
+                $val = _qualify_variables_fully( $val );
                 eval "\$val = $val; 1"
                   or _fail("Invalid .$field value: $spec\n($@)");
                 $arg->{var}{$var}{$field} = $val;
@@ -667,7 +666,7 @@ sub _process_euclid_specs {
 }
 
 
-sub _qualify_variables_fully { ####
+sub _qualify_variables_fully {
     # Restore fully-qualified name to variables:
     #    $x          becomes  $main::x
     #    $::x        becomes  $main::x
@@ -2105,6 +2104,29 @@ as shown below:
 
     =for Euclid:
         level.opt_default: 3
+
+Just like for L<Placeholder constraints>, you can also use variables to define
+default values. You must use the :defer mode and the variables must be globally
+accessible:
+
+    use Getopt::Euclid qw(:defer);
+    Getopt::Euclid->process_args(\@ARGV);
+
+    __END__
+
+    =head1 OPTIONS
+
+    =over
+
+    =item --home <home>
+
+    Your project home. When omitted, this defaults to the location stored in
+    the HOME environment variable.
+
+    =for Euclid
+       home.default: $ENV{'HOME'}
+
+    =back
 
 =head2 Exclusive placeholders
 
