@@ -17,8 +17,8 @@ use Text::Balanced qw(extract_multiple extract_bracketed extract_variable extrac
 
 # Set some module variables
 my $has_run = 0;
-my $constraints_processed = 0;
-my @pods;
+my $has_processed_pod = 0;
+my @pod_names;
 my $minimal_keys;
 my $vars_prefix;
 my $defer = 0;
@@ -105,10 +105,10 @@ sub import {
     # No POD parsing and argument processing in Perl compile mode (ticket 34195)
     return if $^C;
 
-    # Parse POD of caller program and its modules
-    return unless _process_pod();
+    # Get POD of caller program and its modules
+    return unless _get_pod();
 
-    # Parse and export arguments 
+    # Parse POD + parse and export arguments
     Getopt::Euclid->process_args( \@ARGV ) unless $defer;
 }
 
@@ -150,11 +150,15 @@ sub version {
 
 
 sub process_args {
-    # Take a reference to an array of arguments (\@ARGV or other), parse the
-    # arguments, and populate %ARGV (or export specific variable names)
+    # First, parse the POD specifications. Then, parse the given array of
+    # arguments (\@ARGV or other) and populate %ARGV (or export specific
+    # variable names).
     my ($self, $args) = @_;
 
-    _process_constraints() unless $constraints_processed;
+    if (not $has_processed_pod) {
+        _process_pod();
+        $has_processed_pod = 1;
+    }
 
     %ARGV = ();
 
@@ -304,7 +308,7 @@ sub AUTOLOAD {
 }
 
 
-sub _process_pod {
+sub _get_pod {
     # Parse the POD of the caller program and its modules.
     my @caller = caller(1);
 
@@ -317,19 +321,30 @@ sub _process_pod {
 
     # Handle calls from .pm files...
     if ( $caller[1] =~ m/[.]pm \z/xms ) {
-        _process_pm_pod();
+        _get_pm_pod();
         return 0;
     }
 
     # Process POD of caller program
-    _process_prog_pod();
-
+    _get_prog_pod();
     $has_run = 1;
     return 1;
 }
 
 
-sub _process_prog_pod {
+sub _get_prog_pod {
+
+    # Add program name
+    push @pod_names, $0 if (-e $0); # When calling perl -e '...', $0 is '-e', i.e. not a actual file
+
+    # Acquire POD source...
+    $man = _extract_pod( reverse @pod_names );
+    undef @pod_names;
+
+}
+
+
+sub _process_pod {
     # Set up parsing rules...
     my $SPACE      = qr{ [^\S\n]*               }xms;
     my $HEAD_START = qr{ ^=head1                }xms;
@@ -356,11 +371,6 @@ sub _process_prog_pod {
                         )
                         )
                     }xms;
-
-    # Acquire POD source...
-    push @pods, $0 if (-e $0); # When calling perl -e '...', $0 is '-e', i.e. not a actual file
-    $man = _get_pod( reverse @pods );
-    undef @pods;
 
     # Clean up line delimiters
     $man =~ s{ [\n\r] }{\n}gx;
@@ -424,14 +434,11 @@ sub _process_prog_pod {
         $seq++;
     }
     undef $seen;
-
     _minimize_entries_of( \%longnames );
 
     # Extract Euclid information...
     _process_euclid_specs( values(%requireds), values(%options) );
 
-
-    # Build program documentation
     # One-line representation of interface...
     my $arg_summary = join ' ', (sort
        { $requireds{$a}{'seq'} <=> $requireds{$b}{'seq'} }
@@ -473,7 +480,6 @@ sub _process_prog_pod {
     # Version message
     $version  = "This is $SCRIPT_NAME version $SCRIPT_VERSION\n";
     $version .= "\n$licence\n" if $licence;
-
 
     # Convert arg specifications to regexes...
     _convert_to_regex( {%requireds, %options} );
@@ -661,7 +667,7 @@ sub _process_euclid_specs {
 }
 
 
-sub _qualify_variables_fully {
+sub _qualify_variables_fully { ####
     # Restore fully-qualified name to variables:
     #    $x          becomes  $main::x
     #    $::x        becomes  $main::x
@@ -705,25 +711,6 @@ sub _get_variable_names {
         push @$var_names, $var_name;
     }
     return $var_names;
-}
-
-
-sub _process_constraints {
-    # In constraints that use a variable, replace the variable name by its value
-    for my $hash (\%requireds, \%options) {
-        while ( my ($entry, $props) = each %$hash ) {
-            while ( my ($var_name, $var_props) = each %{$props->{'var'}} ) {
-                my $constraint = $var_props->{'constraint_desc'};
-                next if not defined $constraint;
-                for my $var_name ( @{_get_variable_names($constraint)} ) {
-                    my $var_val = eval $var_name;
-                    $var_name = quotemeta $var_name;
-                    $var_props->{'constraint_desc'} =~ s/$var_name/$var_val/;
-                }
-            }
-        }
-    }
-    $constraints_processed = 1;
 }
 
 
@@ -1170,10 +1157,12 @@ sub _fail {
 }
 
 
-sub _process_pm_pod {
+sub _get_pm_pod {
+    # Just add name of this module to list
+
     my @caller = caller(2); # at import()'s level
 
-    push @pods, $caller[1];
+    push @pod_names, $caller[1];
 
     # Install this import() sub as module's import sub...
     no strict 'refs';
@@ -1188,13 +1177,14 @@ sub _process_pm_pod {
 }
 
 
-sub _get_pod {
-    # Extract source from a Perl script (.pl) or module (.pm), including content
-    # from corresponding .pod files if needed
-    my (@perl_files) = @_;  # e.g. .pl, .pm or .t files
+sub _extract_pod {
+    # Extract POD content from list of Perl scripts (.pl) and modules (.pm) and
+    # their corresponding .pod file if available.
+    my (@perl_files) = @_;
 
     my $pod_string = '';
-    open my $pod_fh, '>', \$pod_string or croak "Could not open filehandle to variable because $!";
+    open my $pod_fh, '>', \$pod_string
+      or croak "Could not open filehandle to variable because $!";
     for my $perl_file (@perl_files) {
 
         # Find corresponding .pod file
@@ -1205,11 +1195,12 @@ sub _get_pod {
         my $got_pod = 0;
         if ( -e $pod_file ) {
             # Get .pod file content
-            open my $in, '<', $pod_file or croak "Could not open file $pod_file because $!";
+            open my $in, '<', $pod_file
+              or croak "Could not open file $pod_file because $!";
             my $first_line = <$in>;
             chomp $first_line;
             if ( not ($first_line eq $pod_file_msg) ) {
-                # Do not use G::E auto-generated file since it lacks important stuff
+                # Do not use G::E auto-generated file; it lacks important stuff
                 print $pod_fh "$first_line\n";
                 print $pod_fh $_ while <$in>;    
                 $got_pod = 1;
