@@ -21,12 +21,12 @@ my $constraints_processed = 0;
 my @pods;
 my $minimal_keys;
 my $vars_prefix;
-my $defer;
+my $defer = 0;
 my $pod_file_msg = "# This file was generated dynamically by Getopt::Euclid. Do not edit it.";
 my $matcher;
-my %requireds_hash;
-my %options_hash;
-my %long_names_hash;
+my %requireds;
+my %options;
+my %longnames;
 my $man;     # --man     message
 my $help;    # --help    message
 my $usage;   # --usage   message
@@ -195,14 +195,14 @@ sub process_args {
 
     # Run matcher...
     my $argv = join( q{ }, map { $_ = _escape_arg($_) } @$args );
-    my $all_args_ref = { %options_hash, %requireds_hash };
+    my $all_args_ref = { %options, %requireds };
     if ( my $error = _doesnt_match( $matcher, $argv, $all_args_ref ) ) {
         _bad_arglist($error);
     }
 
     # Check that all requireds have been found...
     my @missing;
-    while ( my ($req) = each %requireds_hash ) {
+    while ( my ($req) = each %requireds ) {
         push @missing, "\t$req\n" if !exists $ARGV{$req};
     }
     _bad_arglist(
@@ -260,7 +260,7 @@ sub process_args {
                 _minimize_entries_of( \%vars_opt_vals );
                 my $maximal = _longestname( keys %vars_opt_vals );
                 _export_var( $vars_prefix, $maximal, $vars_opt_vals{$maximal} );
-                delete $long_names_hash{$maximal};
+                delete $longnames{$maximal};
             }
         }
     }
@@ -268,7 +268,7 @@ sub process_args {
     if ($vars_prefix) {
 
         # Export any unspecified options to keep use strict happy
-        while ( my ($opt_name, $arg_name) = each %long_names_hash ) {
+        while ( my ($opt_name, $arg_name) = each %longnames ) {
             my $arg_info = $all_args_ref->{$arg_name};
             my $val;
             if ( $arg_info->{is_repeatable} or $arg_name =~ />\.\.\./ ) {
@@ -360,6 +360,7 @@ sub _process_prog_pod {
     # Acquire POD source...
     push @pods, $0 if (-e $0); # When calling perl -e '...', $0 is '-e', i.e. not a actual file
     $man = _get_pod( reverse @pods );
+    undef @pods;
 
     # Clean up line delimiters
     $man =~ s{ [\n\r] }{\n}gx;
@@ -411,18 +412,31 @@ sub _process_prog_pod {
         $name =~ s{\A \s+ | \s+ \z}{}gxms;
     }
 
-    # Extract the actual interface...
-    my @requireds_arr;
+    # Extract the actual interface and store each arg entry into a hash of specifications...
+    my $seq  = 0;
+    my $seen = {};
     while ( ( $required || q{} ) =~ m{ $EUCLID_ARG }gxms ) {
-        push @requireds_arr, [$1, $2];
+        $seen = _register_specs( $1, $2, $seq, \%requireds, \%longnames, $seen );
+        $seq++;
     }
-    my @options_arr;
     while ( ( $options  || q{} ) =~ m{ $EUCLID_ARG }gxms ) {
-        push @options_arr, [$1, $2];
+        $seen = _register_specs( $1, $2, $seq, \%options, \%longnames, $seen );
+        $seq++;
     }
+    undef $seen;
 
-    # Build one-line representation of interface...
-    my $arg_summary = join ' ', (map { $_->[0] } @requireds_arr);
+    _minimize_entries_of( \%longnames );
+
+    # Extract Euclid information...
+    _process_euclid_specs( values(%requireds), values(%options) );
+
+
+    # Build program documentation
+    # One-line representation of interface...
+    my $arg_summary = join ' ', (sort
+       { $requireds{$a}{'seq'} <=> $requireds{$b}{'seq'} }
+       (keys %requireds));
+
     1 while $arg_summary =~ s/\[ [^][]* \]//gxms;
 
     if ($opt_name) {
@@ -431,44 +445,12 @@ sub _process_prog_pod {
     }
     $arg_summary =~ s/\s+/ /gxms;
 
-    # Convert each arg entry to a hash of specifications...
-    my %seen;
-    for my $pair( [\@requireds_arr, \%requireds_hash],
-                  [\@options_arr  , \%options_hash  ]  ) {
-        my ($spec, $storage) = @$pair;
-        for my $seq (0 .. scalar @$spec - 1) {
-            my ($name, $spec) = @{$spec->[$seq]};
-            my @variants = _get_variants($name);
-            $$storage{$name} = {
-                seq      => $seq,
-                src      => $spec,
-                name     => $name,
-                variants => \@variants,
-            };
-            if ($minimal_keys) {
-                my $minimal = _minimize_name($name);
-                croak "Internal error: minimalist mode caused arguments",
-                   "'$name' and '$seen{$minimal}' to clash"
-                   if $seen{$minimal};
-                $seen{$minimal} = $name;
-            }
-            $long_names_hash{ _longestname(@variants) } = $name;
-        }
-    }
-     undef @requireds_arr;
-     undef @options_arr;
-    _minimize_entries_of( \%long_names_hash );
-
-    # Extract Euclid information...
-    _process_euclid_specs( values(%requireds_hash), values(%options_hash) );
-
-    $man =~ s{ ($HEAD_START $USAGE \s*) .*? (\s*) $HEAD_END }
-            {$1$SCRIPT_NAME $arg_summary$2}xms;
-
     # Insert default values (if any) in the program's documentation
-    $required = _insert_default_values(\%requireds_hash);
-    $options  = _insert_default_values(\%options_hash  );
+    $required = _insert_default_values(\%requireds);
+    $options  = _insert_default_values(\%options  );
 
+    # Manual message
+    $man =~ s{ ($HEAD_START $USAGE    \s*) .*? (\s*) $HEAD_END } {$1$SCRIPT_NAME $arg_summary$2}xms;
     $man =~ s{ ($HEAD_START $REQUIRED \s*) .*? (\s*) $HEAD_END } {$1$required$2}xms;
     $man =~ s{ ($HEAD_START $OPTIONS  \s*) .*? (\s*) $HEAD_END } {$1$options$2}xms;
 
@@ -492,11 +474,12 @@ sub _process_prog_pod {
     $version  = "This is $SCRIPT_NAME version $SCRIPT_VERSION\n";
     $version .= "\n$licence\n" if $licence;
 
+
     # Convert arg specifications to regexes...
-    _convert_to_regex( {%requireds_hash, %options_hash} );
+    _convert_to_regex( {%requireds, %options} );
 
     # Build matcher...
-    my @arg_list = ( values(%requireds_hash), values(%options_hash) );
+    my @arg_list = ( values(%requireds), values(%options) );
     $matcher = join '|', map { $_->{matcher} }
       sort( { $b->{name} cmp $a->{name} } grep { $_->{name} =~ /^[^<]/ } @arg_list ),
       sort( { $a->{seq}  <=> $b->{seq}  } grep { $_->{name} =~ /^[<]/  } @arg_list );
@@ -506,6 +489,27 @@ sub _process_prog_pod {
     $matcher = '(?:' . $matcher . ')';
 
     return 1;
+}
+
+
+sub _register_specs {
+    my ($name, $spec, $seq, $storage, $longnames, $seen) = @_;
+    my @variants = _get_variants($name);
+    $storage->{$name} = {
+        seq      => $seq,
+        src      => $spec,
+        name     => $name,
+        variants => \@variants,
+    };
+    if ($minimal_keys) {
+        my $minimal = _minimize_name($name);
+        croak "Internal error: minimalist mode caused arguments",
+           "'$name' and '".$seen->{$minimal}."' to clash"
+           if $seen->{$minimal};
+        $seen->{$minimal} = $name;
+    }
+    $longnames->{ _longestname(@variants) } = $name;
+    return $seen;
 }
 
 
@@ -706,7 +710,7 @@ sub _get_variable_names {
 
 sub _process_constraints {
     # In constraints that use a variable, replace the variable name by its value
-    for my $hash (\%requireds_hash, \%options_hash) {
+    for my $hash (\%requireds, \%options) {
         while ( my ($entry, $props) = each %$hash ) {
             while ( my ($var_name, $var_props) = each %{$props->{'var'}} ) {
                 my $constraint = $var_props->{'constraint_desc'};
@@ -1229,11 +1233,8 @@ sub _insert_default_values {
     my ($args) = @_;
     my $pod_string = '';
     # Retrieve item names in sequential order
-    use Data::Dumper; print "ARGS: ".Dumper($args); ###
     for my $item_name ( sort { $args->{$a}->{'seq'} <=> $args->{$b}->{'seq'} } (keys %$args) ) {
         my $item_spec = $args->{$item_name}->{'src'};
-        print "ITEM_NAME: ".$item_name."\n"; ###
-        print "ITEM_SPEC: ".$item_spec."\n"; ###
         $item_spec =~ s/=for(.*)//ms;
         $pod_string .= "=item $item_name\n\n";
         # Get list of variable for this argument
@@ -1260,43 +1261,6 @@ sub _insert_default_values {
     $pod_string = "=over\n\n".$pod_string."=back\n\n";
     return $pod_string;
 }
-
-
-#sub _insert_default_values {
-#    my ($args, $order) = @_;
-#    my $pod_string = '';
-#    use Data::Dumper; print "ARGS : ".Dumper($args); ###
-#    use Data::Dumper; print "ORDER: ".Dumper($order); ###
-#    for my $item (@$order) {
-#        my ($item_name, $item_spec) = @$item;
-#        print "ITEM_NAME: ".$item_name."\n"; ###
-#        print "ITEM_SPEC: ".$item_spec."\n"; ###
-#        $item_spec =~ s/=for(.*)//ms;
-#        $pod_string .= "=item $item_name\n\n";
-#        # Get list of variable for this argument
-#        while ( my ($var_name, $var) = each %{$args->{$item_name}->{var}} ) {
-#            # Get default for this variable
-#            for my $default_type ( 'default', 'opt_default' ) {
-#                my $var_default;
-#                if (exists $var->{$default_type}) {
-#                    if (ref($var->{$default_type}) eq 'ARRAY') {
-#                        $var_default = join(' ', @{$var->{$default_type}});
-#                    } elsif (ref($var->{$default_type}) eq '') {
-#                        $var_default = $var->{$default_type};
-#                    } else {
-#                        carp "Getopt::Euclid found an unexpected default value type";
-#                    }
-#                } else {
-#                    $var_default = 'none';
-#                }
-#                $item_spec =~ s/$var_name\.$default_type/$var_default/g;
-#            }
-#        }
-#        $pod_string .= $item_spec;
-#    }
-#    $pod_string = "=over\n\n".$pod_string."=back\n\n";
-#    return $pod_string;
-#}
 
 
 1;                                 # Magic true value required at end of module
