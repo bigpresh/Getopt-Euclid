@@ -162,7 +162,7 @@ Automaticaly fudge the factors.
 Step size.
 
 =for Euclid:
-   step.default: $STEP1 + $STEP2
+   step.default: $STEP1 + $main'STEP2
 
 =item --version
 

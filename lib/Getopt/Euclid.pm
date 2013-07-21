@@ -6,6 +6,7 @@ use warnings;
 use strict;
 use 5.005000; # perl 5.5.0
 use Carp;
+use Symbol ();
 use re 'eval'; # for matcher regex
 use Pod::Select;
 use Pod::PlainText;
@@ -675,20 +676,21 @@ sub _qualify_variables_fully {
     #    $Package::x stays as $Package::x
     #    /^asdf$/    stays as /^asdf$/
     #    '$10'       stays as '$10'
+    # Note: perlvar indicates that ' can also be used instead of ::
     my ($val) = @_;
     my $new_val;
     for my $section (extract_multiple($val,[{Quoted=>sub{extract_delimited($_[0])}}],undef,0)) {
         if (not ref $section) {
             # A non-quoted section... may contain variables to fix
             for my $var_name ( @{_get_variable_names($section)} ) {
-                my $sigil = substr $var_name, 0, 1, '';
-                my @fields = split '::', $var_name;
-                shift @fields if $fields[0] eq '';
                 # Skip fully qualified names, such as '$Package::x'
-                next if scalar @fields > 1;
-                # Substitute non-fully qualified variable name, such as '$x' or '$::x'
-                my $new_name = $sigil.'main::'.$fields[0];
-                $var_name = quotemeta( $sigil.$var_name );
+                next if $var_name =~ m/main(?:'|::)/;
+                # Substitute non-fully qualified vars, e.g. '$x' or '$::x', by '$main::x'
+                my $sigil = substr $var_name, 0, 1, '';
+                my $new_name = $sigil.Symbol::qualify($var_name, 'main');
+                $var_name = $sigil.$var_name;
+                next if $new_name eq $var_name;
+                $var_name = quotemeta( $var_name );
                 $section =~ s/$var_name/$new_name/g;
             }
             $new_val .= $section;
