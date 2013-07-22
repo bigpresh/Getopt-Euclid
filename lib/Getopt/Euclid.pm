@@ -443,6 +443,10 @@ sub _process_pod {
     my $all_specs = {%requireds, %options};
     _process_euclid_specs( $all_specs );
 
+    # Insert default values (if any) in the program's documentation
+    $required = _insert_default_values(\%requireds);
+    $options  = _insert_default_values(\%options  );
+
     # One-line representation of interface...
     my $arg_summary = join ' ', (sort
        { $requireds{$a}{'seq'} <=> $requireds{$b}{'seq'} }
@@ -455,10 +459,6 @@ sub _process_pod {
       $arg_summary .= lc "[$opt_name]";
     }
     $arg_summary =~ s/\s+/ /gxms;
-
-    # Insert default values (if any) in the program's documentation
-    $required = _insert_default_values(\%requireds);
-    $options  = _insert_default_values(\%options  );
 
     # Manual message
     $man =~ s{ ($HEAD_START $USAGE    \s*) .*? (\s*) $HEAD_END } {$1$SCRIPT_NAME $arg_summary$2}xms;
@@ -1261,6 +1261,11 @@ sub _insert_default_values {
                 }
                 $item_spec =~ s/$var_name\.$default_type/$var_default/g;
             }
+        }
+        if ($item_spec =~ m/(\S+(\.(?:opt_)?default))/) {
+            my ($reference, $default_type) = ($1, $2);
+            _fail( "Invalid reference to field $reference in this argument ".
+                   "description:\n$item_spec" );
         }
         $pod_string .= $item_spec;
     }
@@ -2457,6 +2462,32 @@ instead of:
         curse.default: '*$@!&'
 
 =item Invalid .opt_default value: %s
+
+Same as previous diagnostic, but for optional defaults.
+
+=item Invalid reference to field (%s.default) in argument description: %s
+
+You referred to a default value in the description of an argument, but there
+is no such default. It may be a typo, or you may be referring to the default
+value for a different argument, e.g.:
+
+    =item -a <age>
+
+    An optional age. Default: years.default
+
+    =for Euclid
+        age.default: 21
+
+instead of:
+
+    =item -a <age>
+
+    An optional age. Default: age.default
+
+    =for Euclid
+        age.default: 21
+
+=item Invalid reference to field %s.opt_defaul) in this argument description: %s
 
 Same as previous diagnostic, but for optional defaults.
 
