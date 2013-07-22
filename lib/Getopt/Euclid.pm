@@ -531,7 +531,7 @@ sub _process_euclid_specs {
     for my $arg ( @args ) {
 
         # Record variables seen here...
-        my $var_names = _check_name( $arg->{name} );
+        my $var_names = _validate_name( $arg->{name} );
         for my $var_name (@$var_names) {
             $var_list{$var_name} = undef;
         }
@@ -678,33 +678,32 @@ sub _qualify_variables_fully {
     #    '$10'       stays as '$10'
     # Note: perlvar indicates that ' can also be used instead of ::
     my ($val) = @_;
-
-    # Avoid expensive Text::Balanced operations if we know that there are no variables
-    return $val if $val !~ m/(?:\$|\@|\%)/;
-
-    my $new_val;
-    for my $s (extract_multiple($val,[{Quoted=>sub{extract_delimited($_[0])}}],undef,0)) {
-        if (not ref $s) {
-            # A non-quoted section... may contain variables to fix
-            for my $var_name ( @{_get_variable_names($s)} ) {
-                # Skip fully qualified names, such as '$Package::x'
-                next if $var_name =~ m/main(?:'|::)/;
-                # Remove sigils from beginning of variable name: $ @ % {
-                $var_name =~ s/^(?:\$|\@|\%|\{)+//;
-                # Substitute non-fully qualified vars, e.g. '$x' or '$::x', by '$main::x'
-                my $new_name = Symbol::qualify($var_name, 'main');
-                next if $new_name eq $var_name;
-                $var_name = quotemeta( $var_name );
-                $s =~ s/$var_name/$new_name/;
+    if ($val =~ m/[\$\@\%]/) { # Avoid expensive Text::Balanced operations when there are no variables
+        my $new_val;
+        for my $s (extract_multiple($val,[{Quoted=>sub{extract_delimited($_[0])}}],undef,0)) {
+            if (not ref $s) {
+                # A non-quoted section... may contain variables to fix
+                for my $var_name ( @{_get_variable_names($s)} ) {
+                    # Skip fully qualified names, such as '$Package::x'
+                    next if $var_name =~ m/main(?:'|::)/;
+                    # Remove sigils from beginning of variable name: $ @ % {
+                    $var_name =~ s/^[\$\@\%\{]+//;
+                    # Substitute non-fully qualified vars, e.g. '$x' or '$::x', by '$main::x'
+                    my $new_name = Symbol::qualify($var_name, 'main');
+                    next if $new_name eq $var_name;
+                    $var_name = quotemeta( $var_name );
+                    $s =~ s/$var_name/$new_name/;
+                }
+                $new_val .= $s;
+            } else {
+                # A quoted section, to keep as-is
+                $new_val .= $$s;
             }
-            $new_val .= $s;
-        } else {
-            # A quoted section, to keep as-is
-            $new_val .= $$s;
         }
+        return $new_val;
+    } else {
+        return $val;
     }
-    return $new_val;
-
 }
 
 
@@ -1055,15 +1054,13 @@ sub _convert_to_regex {
 sub _escape_specials {
     # Escape quotemeta special characters
     my $arg = shift;
-    $arg =~ s{([@#$^*()+{}?])}{\\$1}gxms;
+    $arg =~ s{([@#$^*()+{}?])}{\\$1}gxms; #?
     return $arg;
 }
 
 
 sub _print_pod {
     my ( $pod, $paged ) = @_;
-
-    use Carp qw(cluck); cluck 'This is how we got here!'; #############
 
     if ($paged) {
         # Page output
@@ -1079,20 +1076,23 @@ sub _print_pod {
 }
 
 
-sub _check_name {
+sub _validate_name {
     # Check that the argument name only has pairs of < > brackets (ticket 34199)
     # Return the name of the variables that this argument specifies
     my ($name) = @_;
-    my %var_names;
-    for my $s (extract_multiple($name,[sub{extract_bracketed($_[0],'<>')}],undef,0)) {
-        if ($s =~ s/^<(.*)>$/$1/) {
-            $var_names{$1} = undef;
+    if ($name =~ m/[<>]/) { # skip expensive Text::Balance functions if possible
+        my %var_names;
+        for my $s (extract_multiple($name,[sub{extract_bracketed($_[0],'<>')}],undef,0)) {
+            $s =~ s/^<(.*)>$/$1/;
+            if ( $s =~ m/[<>]/ ) {
+                _fail( 'Invalid argument specification: '.$name );
+            }
+            $var_names{$s} = undef;
         }
-        if ( $s =~ m/[<>]/ ) {
-            _fail( 'Invalid argument specification: ' . $name );
-        }
+        return [keys %var_names];
+    } else {    
+        return [];
     }
-    return [keys %var_names];
 }
 
 
