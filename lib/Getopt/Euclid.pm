@@ -685,13 +685,13 @@ sub _qualify_variables_fully {
             for my $var_name ( @{_get_variable_names($section)} ) {
                 # Skip fully qualified names, such as '$Package::x'
                 next if $var_name =~ m/main(?:'|::)/;
+                # Remove sigils from beginning of variable name: $ @ % {
+                $var_name =~ s/^(?:\$|\@|\%|\{)+//;
                 # Substitute non-fully qualified vars, e.g. '$x' or '$::x', by '$main::x'
-                my $sigil = substr $var_name, 0, 1, '';
-                my $new_name = $sigil.Symbol::qualify($var_name, 'main');
-                $var_name = $sigil.$var_name;
+                my $new_name = Symbol::qualify($var_name, 'main');
                 next if $new_name eq $var_name;
                 $var_name = quotemeta( $var_name );
-                $section =~ s/$var_name/$new_name/g;
+                $section =~ s/$var_name/$new_name/;
             }
             $new_val .= $section;
         } else {
@@ -704,16 +704,20 @@ sub _qualify_variables_fully {
 
 
 sub _get_variable_names {
-    # Get the variables names (as an arrayref) found in a string.
-    my ($string) = @_;
-    my $var_names = [];
-    for my $var_name (extract_multiple($string,[sub{extract_variable($_[0],'')}],undef,1)) {
-        # Skip special or invalid names.
-        # Name must start with underscore or a letter, e.g. '$t' or '@_'
-        next if not $var_name =~ m/^.[_a-z]/i; 
-        push @$var_names, $var_name;
+    # Get an arrayref of the variables names found in the provided string.
+    # This function is a hack, needed only because of Text::Balanced ticket #78855:
+    #    https://rt.cpan.org/Public/Bug/Display.html?id=78855
+    my ($str) = @_;
+    my $vars = [];
+    for my $var (extract_multiple($str,[sub{extract_variable($_[0],'')}],undef,1)) {
+        # Name must start with underscore or a letter, e.g. $t $$h{a} ${$h}{a} $h->{a} @_
+        # Skip special or invalid names, e.g. $/ $1
+        my $tmp = $var;
+        $tmp =~ s/(?:{|})//g;
+        next if not $tmp =~ m/^[\$\@\%]+[_a-z]/i;
+        push @$vars, $var;
     }
-    return $var_names;
+    return $vars;
 }
 
 
