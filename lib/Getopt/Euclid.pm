@@ -678,11 +678,15 @@ sub _qualify_variables_fully {
     #    '$10'       stays as '$10'
     # Note: perlvar indicates that ' can also be used instead of ::
     my ($val) = @_;
+
+    # Avoid expensive Text::Balanced operations if we know that there are no variables
+    return $val if $val !~ m/(?:\$|\@|\%)/;
+
     my $new_val;
-    for my $section (extract_multiple($val,[{Quoted=>sub{extract_delimited($_[0])}}],undef,0)) {
-        if (not ref $section) {
+    for my $s (extract_multiple($val,[{Quoted=>sub{extract_delimited($_[0])}}],undef,0)) {
+        if (not ref $s) {
             # A non-quoted section... may contain variables to fix
-            for my $var_name ( @{_get_variable_names($section)} ) {
+            for my $var_name ( @{_get_variable_names($s)} ) {
                 # Skip fully qualified names, such as '$Package::x'
                 next if $var_name =~ m/main(?:'|::)/;
                 # Remove sigils from beginning of variable name: $ @ % {
@@ -691,15 +695,16 @@ sub _qualify_variables_fully {
                 my $new_name = Symbol::qualify($var_name, 'main');
                 next if $new_name eq $var_name;
                 $var_name = quotemeta( $var_name );
-                $section =~ s/$var_name/$new_name/;
+                $s =~ s/$var_name/$new_name/;
             }
-            $new_val .= $section;
+            $new_val .= $s;
         } else {
             # A quoted section, to keep as-is
-            $new_val .= $$section;
+            $new_val .= $$s;
         }
     }
     return $new_val;
+
 }
 
 
@@ -1057,6 +1062,8 @@ sub _escape_specials {
 
 sub _print_pod {
     my ( $pod, $paged ) = @_;
+
+    use Carp qw(cluck); cluck 'This is how we got here!'; #############
 
     if ($paged) {
         # Page output
