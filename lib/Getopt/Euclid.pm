@@ -440,7 +440,8 @@ sub _process_pod {
     _minimize_entries_of( \%longnames );
 
     # Extract Euclid information...
-    _process_euclid_specs( values(%requireds), values(%options) );
+    my $all_specs = {%requireds, %options};
+    _process_euclid_specs( $all_specs );
 
     # One-line representation of interface...
     my $arg_summary = join ' ', (sort
@@ -485,7 +486,7 @@ sub _process_pod {
     $version .= "\n$licence\n" if $licence;
 
     # Convert arg specifications to regexes...
-    _convert_to_regex( {%requireds, %options} );
+    _convert_to_regex( $all_specs );
 
     # Build matcher...
     my @arg_list = ( values(%requireds), values(%options) );
@@ -523,16 +524,15 @@ sub _register_specs {
 
 
 sub _process_euclid_specs {
-    my (@args) = @_;
+    my ($args) = @_;
     my %var_list;
     my %excluded_by_def;
 
   ARG:
-    for my $arg ( @args ) {
+    while ( (undef, my $arg) = each %$args ) {
 
-        # Record variables seen here...
-        my $var_names = _validate_name( $arg->{name} );
-        for my $var_name (@$var_names) {
+        # Validate and record variables seen here...
+        for my $var_name (@{_validate_name( $arg->{name} )}) {
             $var_list{$var_name} = undef;
         }
 
@@ -644,7 +644,8 @@ sub _process_euclid_specs {
     }
 
     # Validate and complete .excludes specs
-    for my $arg ( @args ) {
+
+    while ( (undef, my $arg) = each %$args ) {
         while ( my ($var, $var_specs) = each %{$arg->{var}} ) {
             # Check for invalid placeholder name in .excludes specifications
             for my $excl_var (@{$var_specs->{excludes}}) {
