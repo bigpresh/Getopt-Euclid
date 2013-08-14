@@ -752,7 +752,7 @@ sub _minimize_entries_of {
 sub _doesnt_match {
     my ( $matcher, $argv, $arg_specs_ref ) = @_;
 
-    our @errors; # 'our' instead of 'my' because it's needed for the re pragma
+    our @errors; # 'our' instead of 'my' because it is needed for the re pragma
     local @errors = ();
     %ARGV = ();
 
@@ -1446,7 +1446,7 @@ As a special case, if the module is loaded within some other module
 (i.e. from within a C<.pm> file), it still locates and extracts POD
 information, but instead of parsing C<@ARGV> immediately, it caches that
 information and installs an C<import()> subroutine in the caller module.
-That new C<import()> acts just like Getopt::Euclid's own import, except
+This new C<import()> acts just like Getopt::Euclid's own import, except
 that it adds the POD from the caller module to the POD of the callee.
 
 All of which just means you can put some or all of your CLI specification
@@ -1923,9 +1923,9 @@ You can also specify an operator expression after the type name:
         h.type: integer > 0
         w.type: number <= 100
 
-specifies that C<< <h> >> has to be given an integer that's greater than zero,
+specifies that C<< <h> >> has to be given an integer that is greater than zero,
 and that C<< <w> >> has to be given a number (not necessarily an integer)
-that's no more than 100.
+that is no more than 100.
 
 These type constraints have two alternative syntaxes:
 
@@ -1950,7 +1950,7 @@ the placeholder as many times as necessary:
         w.type: number,  Math::is_prime(w) || w % 2 == 0
 
 Note that the expressions are evaluated in the C<package main> namespace,
-so it's important to qualify any subroutines that are not in that namespace.
+so it is important to qualify any subroutines that are not in that namespace.
 Furthermore, any subroutines used must be defined (or loaded from a module)
 I<before> the C<use Getopt::Euclid> statement.
 
@@ -2202,7 +2202,7 @@ cuddled together. Getopt::Euclid would not allow:
 
     -vxz
 
-That's because cuddling is recognized by progressively removing the second
+This is because cuddling is recognized by progressively removing the second
 character of the cuddle. In other words:
 
     -vxz
@@ -2401,8 +2401,8 @@ specification of the command-line interface:
 
 Something is horribly wrong. Getopt::Euclid was unable to read your
 program to extract the POD from it. Check your program's permissions,
-though it's a mystery how I<perl> was able to run the program in the
-first place, if it's not readable.
+though it is a mystery how I<perl> was able to run the program in the
+first place, if it is not readable.
 
 =item .pm file cannot define an explicit import() when using Getopt::Euclid
 
