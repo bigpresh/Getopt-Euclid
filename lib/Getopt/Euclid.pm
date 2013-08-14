@@ -101,7 +101,7 @@ sub Getopt::Euclid::Importer::DESTROY {
 sub import {
     shift @_;
     @_ = grep { !( /:minimal_keys/     and $minimal_keys = 1             ) } @_;
-    @_ = grep { !( /:vars(?:<(\w+)>)?/ and $vars_prefix  = $1 || "ARGV_" ) } @_;
+    @_ = grep { !( /:vars(?:<(\w+)>)?/ and $vars_prefix  = $1 || 'ARGV_' ) } @_;
     @_ = grep { !( /:defer/            and $defer        = 1             ) } @_;
     croak "Unknown mode ('$_')" for @_;
 
@@ -317,7 +317,7 @@ sub _get_pod {
 
     # Sanity check
     if ($has_run) {
-        carp "Getopt::Euclid loaded a second time";
+        carp 'Getopt::Euclid loaded a second time';
         warn "Second attempt to parse command-line was ignored\n";
         return 0;
     }
@@ -513,7 +513,7 @@ sub _register_specs {
     };
     if ($minimal_keys) {
         my $minimal = _minimize_name($name);
-        croak "Internal error: minimalist mode caused arguments ",
+        croak "Internal error: minimalist mode caused arguments ".
            "'$name' and '".$seen->{$minimal}."' to clash"
            if $seen->{$minimal};
         $seen->{$minimal} = $name;
