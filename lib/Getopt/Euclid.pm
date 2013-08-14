@@ -1496,7 +1496,7 @@ have the POD from several modules included for argument parsing.
 Alternatively, to parse arguments from a source different from C<@ARGV>, use the
 C<process_args()> subroutine.
 
-    use Getopt::Euclid;
+    use Getopt::Euclid qw(:defer);
     my @args = ( '-in file.txt', '-out results.txt' );
     Getopt::Euclid->process_args(\@args);
 
