@@ -117,7 +117,6 @@ sub import {
 
 
 sub man {
-    shift @_;
     return $man;
 }
 
@@ -135,19 +134,16 @@ sub podfile {
 
 
 sub usage {
-    shift @_;
     return $usage;
 }
 
 
 sub help {
-    shift @_;
     return $help;
 }
 
 
 sub version {
-    shift @_;
     return $version;
 }
 
@@ -159,7 +155,7 @@ sub process_args {
     my ($self, $args) = @_;
 
     if (not $has_processed_pod) {
-        _process_pod();
+        _parse_pod();
         $has_processed_pod = 1;
     }
 
@@ -347,7 +343,7 @@ sub _get_prog_pod {
 }
 
 
-sub _process_pod {
+sub _parse_pod {
     # Set up parsing rules...
     my $SPACE      = qr{ [^\S\n]*               }xms;
     my $HEAD_START = qr{ ^=head1                }xms;
