@@ -1055,7 +1055,7 @@ sub _convert_to_regex {
 sub _escape_specials {
     # Escape quotemeta special characters
     my $arg = shift;
-    $arg =~ s{([@#$^*()+{}?])}{\\$1}gxms; #?
+    $arg =~ s{([@#\$^*()+{}?])}{\\$1}gxms;
     return $arg;
 }
 
