@@ -108,24 +108,64 @@ sub import {
     # No POD parsing and argument processing in Perl compile mode (ticket 34195)
     return if $^C;
 
-    # Get name of caller program and its modules
+    # Get name of caller program and its modules in @pod_names
     return unless _get_pod_names();
 
     # Extract POD of given files
-    Getopt::Euclid->process_pod( @pod_names ); ###
+    $man = Getopt::Euclid->process_pods( [reverse @pod_names] );
+    undef @pod_names;
+    $has_run = 1;
 
     # Parse POD + parse and export arguments
     Getopt::Euclid->process_args( \@ARGV ) unless $defer;
+
+    return 1;
 }
 
 
-sub process_pod {
-    # Acquire POD source...
-    my ($self, @names) = @_;
-    $man = _extract_pod( reverse @pod_names );
-    undef @pod_names;
-    $has_run = 1;
-    return $man;
+sub process_pods {
+    # Extract POD content from list of Perl scripts (.pl) and modules (.pm) and
+    # their corresponding .pod file if available.
+    my ($self, $perl_files) = @_;
+
+    my $pod_string = '';
+    open my $pod_fh, '>', \$pod_string
+      or croak "Could not open filehandle to variable because $!";
+    for my $perl_file (@$perl_files) {
+
+        ####
+        # Find corresponding .pod file
+        my ($name, $path, $suffix) = fileparse($perl_file, qr/\.[^.]*/);
+        my $pod_file = catfile( $path, $name.'.pod' );
+
+        # Get POD either from .pod file (preferably) or from Perl file
+        my $got_pod = 0;
+        if ( -e $pod_file ) {
+            # Get .pod file content
+            open my $in, '<', $pod_file
+              or croak "Could not open file $pod_file because $!";
+            my $first_line = <$in>;
+            chomp $first_line;
+            if ( not ($first_line =~ m/$skip_keyword/) ) {
+                # Skip G::E auto-generated files since they lack important data
+                print $pod_fh "$first_line\n";
+                print $pod_fh $_ while <$in>;
+                $got_pod = 1;
+            }
+            close $in;
+        }
+        ####
+
+        if (not $got_pod) {
+            # Parse POD content of Perl file
+            podselect( {-output => $pod_fh}, $perl_file );
+        }
+        print $pod_fh "\n" if $pod_string;
+
+    }
+    close $pod_fh;
+
+    return $pod_string;
 }
 
 
@@ -316,6 +356,9 @@ sub version {
 sub AUTOLOAD {
     our $AUTOLOAD;
     $AUTOLOAD =~ s{.*::}{main::}xms;
+
+    print "autoload: $AUTOLOAD\n"; ###
+
     no strict 'refs';
     goto &$AUTOLOAD;
 }
@@ -641,6 +684,7 @@ sub _process_euclid_specs {
         }
     }
 
+    return 1;
 }
 
 
@@ -718,7 +762,7 @@ sub _minimize_entries_of {
         $arg_ref->{$new_key} = delete $arg_ref->{$old_key};
     }
 
-    return;
+    return 1;
 }
 
 
@@ -756,7 +800,7 @@ sub _doesnt_match {
         return "Unknown argument: $error";
     }
 
-    return;    # No error
+    return 0;    # No error
 }
 
 
@@ -797,6 +841,7 @@ sub _rectify_all_args {
             }
         }
     }
+    return 1;
 }
 
 
@@ -929,7 +974,7 @@ sub _verify_args {
             }
         }
     }
-
+    return 1;
 }
 
 
@@ -1022,7 +1067,7 @@ sub _convert_to_regex {
              }gexms;
         $arg->{generic_matcher} = $generic;
     }
-    return;
+    return 1;
 }
 
 
@@ -1122,6 +1167,7 @@ sub _export_var {
     my $callpkg = caller(2+($Exporter::ExportLevel || 0)); # at import()'s level
     no strict 'refs';
     *{"$callpkg\::$export_as"} = ( ref $value ) ? $value : \$value;
+    return 1;
 }
 
 
@@ -1135,7 +1181,7 @@ sub _make_equivalent {
         }
     }
 
-    return;
+    return 1;
 }
 
 
@@ -1169,7 +1215,7 @@ sub _get_pod_names {
 }
 
 
-sub _get_prog_pod {
+sub _get_prog_pod { ##########
     # Add program name
     push @pod_names, $0 if (-e $0); # When calling perl -e '...', $0 is '-e', i.e. not a actual file
     return 1;
@@ -1193,49 +1239,7 @@ sub _get_pm_pod {
       = bless sub { $lambda = 1; goto &Getopt::Euclid::import },
       'Getopt::Euclid::Importer';
 
-}
-
-
-sub _extract_pod {
-    # Extract POD content from list of Perl scripts (.pl) and modules (.pm) and
-    # their corresponding .pod file if available.
-    my (@perl_files) = @_;
-
-    my $pod_string = '';
-    open my $pod_fh, '>', \$pod_string
-      or croak "Could not open filehandle to variable because $!";
-    for my $perl_file (@perl_files) {
-
-        # Find corresponding .pod file
-        my ($name, $path, $suffix) = fileparse($perl_file, qr/\.[^.]*/);
-        my $pod_file = catfile( $path, $name.'.pod' );
-
-        # Get POD either from .pod file (preferably) or from Perl file
-        my $got_pod = 0;
-        if ( -e $pod_file ) {
-            # Get .pod file content
-            open my $in, '<', $pod_file
-              or croak "Could not open file $pod_file because $!";
-            my $first_line = <$in>;
-            chomp $first_line;
-            if ( not ($first_line =~ m/$skip_keyword/) ) {
-                # Do not use G::E auto-generated file; it lacks important stuff
-                print $pod_fh "$first_line\n";
-                print $pod_fh $_ while <$in>;    
-                $got_pod = 1;
-            }
-            close $in;
-        }
-        if (not $got_pod) {
-            # Parse POD content of Perl file
-            podselect( {-output => $pod_fh}, $perl_file );
-        }
-        print $pod_fh "\n" if $pod_string;
-
-    }
-    close $pod_fh;
-
-    return $pod_string;
+    return 1;
 }
 
 
@@ -1501,17 +1505,19 @@ Alternatively, to parse arguments from a source different from C<@ARGV>, use the
 C<process_args()> subroutine.
 
     use Getopt::Euclid qw(:defer);
-    my @args = ( '-in file.txt', '-out results.txt' );
+    my @args = ( '-in', 'file.txt', '-out', 'results.txt' );
     Getopt::Euclid->process_args(\@args);
 
-###=item process_pod()
+=item process_pods() #################
 
-###Similarly, to parse argument specifications from a source different than the
-###current script (and its dependencies), use the C<process_pod()> subroutine.
+Similarly, to parse argument specifications from a source different than the
+current script (and its dependencies), use the C<process_pods()> subroutine.
 
-###    use Getopt::Euclid;
-###    my @args = ( '-in file.txt', '-out results.txt' );
-###    Getopt::Euclid->process_args(\@args);
+    use Getopt::Euclid ();
+    my @pods = ( 'script.pl', 'Module.pm' );
+    Getopt::Euclid->process_pods(\@pods);
+    my @args = ( '-in', 'file.txt', '-out', 'results.txt' );
+    Getopt::Euclid->process_args(\@args);
 
 =back
 
