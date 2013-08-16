@@ -125,38 +125,41 @@ sub import {
 
 sub process_pods {
     # Extract POD content from list of Perl scripts (.pl) and modules (.pm) and
-    # their corresponding .pod file if available.
-    my ($self, $perl_files) = @_;
+    # their corresponding .pod file if available. When given the argument
+    # {-strict => 1}, do not look for .pod files.
+    my ($self, $perl_files, $args) = @_;
 
     my $pod_string = '';
     open my $pod_fh, '>', \$pod_string
       or croak "Could not open filehandle to variable because $!";
     for my $perl_file (@$perl_files) {
 
-        ####
-        # Find corresponding .pod file
-        my ($name, $path, $suffix) = fileparse($perl_file, qr/\.[^.]*/);
-        my $pod_file = catfile( $path, $name.'.pod' );
+        my $got_pod_file = 0;
 
-        # Get POD either from .pod file (preferably) or from Perl file
-        my $got_pod = 0;
-        if ( -e $pod_file ) {
-            # Get .pod file content
-            open my $in, '<', $pod_file
-              or croak "Could not open file $pod_file because $!";
-            my $first_line = <$in>;
-            chomp $first_line;
-            if ( not ($first_line =~ m/$skip_keyword/) ) {
-                # Skip G::E auto-generated files since they lack important data
-                print $pod_fh "$first_line\n";
-                print $pod_fh $_ while <$in>;
-                $got_pod = 1;
+        if ( not $args->{-strict} ) {
+
+            # Find corresponding .pod file
+            my ($name, $path, $suffix) = fileparse($perl_file, qr/\.[^.]*/);
+            my $pod_file = catfile( $path, $name.'.pod' );
+
+            # Get POD either from .pod file (preferably) or from Perl file
+            if ( -e $pod_file ) {
+                # Get .pod file content
+                open my $in, '<', $pod_file
+                  or croak "Could not open file $pod_file because $!";
+                my $first_line = <$in>;
+                chomp $first_line;
+                if ( not ($first_line =~ m/$skip_keyword/) ) {
+                    # Skip G::E auto-generated files since they lack important data
+                    print $pod_fh "$first_line\n";
+                    print $pod_fh $_ while <$in>;
+                    $got_pod_file = 1;
+                }
+                close $in;
             }
-            close $in;
         }
-        ####
 
-        if (not $got_pod) {
+        if (not $got_pod_file) {
             # Parse POD content of Perl file
             podselect( {-output => $pod_fh}, $perl_file );
         }
@@ -356,9 +359,6 @@ sub version {
 sub AUTOLOAD {
     our $AUTOLOAD;
     $AUTOLOAD =~ s{.*::}{main::}xms;
-
-    print "autoload: $AUTOLOAD\n"; ###
-
     no strict 'refs';
     goto &$AUTOLOAD;
 }
@@ -1203,41 +1203,24 @@ sub _get_pod_names {
         return 0;
     }
 
-    # Handle calls from .pm files...
+    # Handle calls from .pm files
     if ( $caller[1] =~ m/[.]pm \z/xms ) {
-        _get_pm_pod();
+        my @caller = caller(1); # at import()'s level
+        push @pod_names, $caller[1];
+        # Install this import() sub as module's import sub...
+        no strict 'refs';
+        croak '.pm file cannot define an explicit import() when using Getopt::Euclid'
+          if *{"$caller[0]::import"}{CODE};
+        my $lambda;    # Needed so the anon sub is generated at run-time
+        *{"$caller[0]::import"}
+          = bless sub { $lambda = 1; goto &Getopt::Euclid::import },
+          'Getopt::Euclid::Importer';
+
         return 0;
     }
 
-    # Process POD of caller program
-    _get_prog_pod();
-    return 1;
-}
-
-
-sub _get_prog_pod { ##########
-    # Add program name
+    # Add name of caller program
     push @pod_names, $0 if (-e $0); # When calling perl -e '...', $0 is '-e', i.e. not a actual file
-    return 1;
-}
-
-
-sub _get_pm_pod {
-    # Just add name of this module to list
-
-    my @caller = caller(2); # at import()'s level
-
-    push @pod_names, $caller[1];
-
-    # Install this import() sub as module's import sub...
-    no strict 'refs';
-    croak '.pm file cannot define an explicit import() when using Getopt::Euclid'
-      if *{"$caller[0]::import"}{CODE};
-
-    my $lambda;    # Needed so the anon sub is generated at run-time
-    *{"$caller[0]::import"}
-      = bless sub { $lambda = 1; goto &Getopt::Euclid::import },
-      'Getopt::Euclid::Importer';
 
     return 1;
 }
@@ -1283,6 +1266,7 @@ sub _insert_default_values {
 
 
 1;                                 # Magic true value required at end of module
+
 
 =head1 NAME
 
@@ -1508,16 +1492,20 @@ C<process_args()> subroutine.
     my @args = ( '-in', 'file.txt', '-out', 'results.txt' );
     Getopt::Euclid->process_args(\@args);
 
-=item process_pods() #################
+=item process_pods()
 
 Similarly, to parse argument specifications from a source different than the
 current script (and its dependencies), use the C<process_pods()> subroutine.
 
     use Getopt::Euclid ();
     my @pods = ( 'script.pl', 'Module.pm' );
-    Getopt::Euclid->process_pods(\@pods);
+    Getopt::Euclid->process_pods(\@pods, {-strict => 1});
     my @args = ( '-in', 'file.txt', '-out', 'results.txt' );
     Getopt::Euclid->process_args(\@args);
+
+By default, this method will look for .pod files associated with the given .pl
+and .pm files and use these .pod files preferentially when available. Set
+-strict to 1 to only use the given files.
 
 =back
 
