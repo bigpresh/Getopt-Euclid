@@ -17,6 +17,9 @@ use Text::Balanced qw(extract_multiple extract_bracketed extract_variable extrac
 
 
 # Set some module variables
+my $skip_keyword = 'Getopt::Euclid'; # Ignore files with a first line containing this keyword.
+my $pod_file_msg = "# This file was generated dynamically by $skip_keyword. Do not edit it.";
+
 my $has_run = 0;
 my $has_processed_pod = 0;
 my @pod_names;
@@ -27,15 +30,12 @@ my $matcher;
 my %requireds;
 my %options;
 my %longnames;
-my $man;     # --man     message
 my $help;    # --help    message
 my $usage;   # --usage   message
 my $version; # --version message
 
-my $skip_keyword = 'Getopt::Euclid'; # Ignore files with a first line containing this keyword.
-my $pod_file_msg = "# This file was generated dynamically by $skip_keyword. Do not edit it.";
-
 # Global variables
+our $man;    # --man     message (ticket # 87592)
 our $SCRIPT_NAME;
 our $SCRIPT_VERSION; # for ticket # 55259
 
