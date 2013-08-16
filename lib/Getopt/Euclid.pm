@@ -35,16 +35,16 @@ my $usage;   # --usage   message
 my $version; # --version message
 
 # Global variables
-our $man;    # --man     message (ticket # 87592)
+our $MAN;    # --man     message (ticket # 87592)
 our $SCRIPT_NAME;
 our $SCRIPT_VERSION; # for ticket # 55259
 
-my $OPTIONAL;
-$OPTIONAL = qr{ \[ [^[]* (?: (??{$OPTIONAL}) [^[]* )* \] }xms;
+my $optional_re;
+$optional_re = qr{ \[ [^[]* (?: (??{$optional_re}) [^[]* )* \] }xms;
 
 # Convert arg specification syntax to Perl regex syntax
 
-my %STD_MATCHER_FOR = (
+my %std_matcher_for = (
     integer => '[+-]?\\d+(?:[eE][+]?\d+)?',
     number  => '[+-]?(?:\\d+\\.?\\d*|\\.\\d+)(?:[eE][+-]?\d+)?',
     input   => '\S+',
@@ -54,7 +54,7 @@ my %STD_MATCHER_FOR = (
 );
 
 _make_equivalent(
-    \%STD_MATCHER_FOR,
+    \%std_matcher_for,
     integer => [qw( int i +int +i 0+int 0+i +integer 0+integer )],
     number  => [qw( num n +num +n 0+num 0+n +number 0+number   )],
     input   => [qw( readable in )],
@@ -62,7 +62,7 @@ _make_equivalent(
     string  => [qw( str s )],
 );
 
-my %STD_CONSTRAINT_FOR = (
+my %std_constraint_for = (
     'string'    => sub { 1 },            # Always okay (matcher ensures this)
     'integer'   => sub { 1 },            # Always okay (matcher ensures this)
     '+integer'  => sub { $_[0] > 0 },
@@ -79,7 +79,7 @@ my %STD_CONSTRAINT_FOR = (
 );
 
 _make_equivalent(
-    \%STD_CONSTRAINT_FOR,
+    \%std_constraint_for,
     'integer'   => [qw(   int   i )],
     '+integer'  => [qw(  +int  +i )],
     '0+integer' => [qw( 0+int 0+i )],
@@ -112,7 +112,7 @@ sub import {
     return unless _get_pod_names();
 
     # Extract POD of given files
-    $man = Getopt::Euclid->process_pods( [reverse @pod_names] );
+    $MAN = Getopt::Euclid->process_pods( [reverse @pod_names] );
     undef @pod_names;
     $has_run = 1;
 
@@ -139,8 +139,8 @@ sub process_pods {
         if ( not $args->{-strict} ) {
 
             # Find corresponding .pod file
-            my ($name, $path, $suffix) = fileparse($perl_file, qr/\.[^.]*/);
-            my $pod_file = catfile( $path, $name.'.pod' );
+            my ($name_re, $path, $suffix) = fileparse($perl_file, qr/\.[^.]*/);
+            my $pod_file = catfile( $path, $name_re.'.pod' );
 
             # Get POD either from .pod file (preferably) or from Perl file
             if ( -e $pod_file ) {
@@ -323,8 +323,8 @@ sub process_args {
 sub podfile {
     # Write the given POD doc into a .pod file, overwriting any existing .pod file
     return if not -e $0;
-    my ($name, $path, $suffix) = fileparse($0, qr/\.[^.]*/);
-    my $pod_file = catfile( $path, $name.'.pod' );
+    my ($name_re, $path, $suffix) = fileparse($0, qr/\.[^.]*/);
+    my $pod_file = catfile( $path, $name_re.'.pod' );
     open my $out_fh, '>', $pod_file or croak "Could not write file $pod_file because $!";
     print $out_fh $pod_file_msg."\n\n".Getopt::Euclid->man();
     close $out_fh;
@@ -333,7 +333,7 @@ sub podfile {
 
 
 sub man {
-    return $man;
+    return $MAN;
 }
 
 
@@ -366,23 +366,23 @@ sub AUTOLOAD {
 
 sub _parse_pod {
     # Set up parsing rules...
-    my $SPACE      = qr{ [^\S\n]*               }xms;
-    my $HEAD_START = qr{ ^=head1                }xms;
-    my $HEAD_END   = qr{ (?= $HEAD_START | \z)  }xms;
-    my $POD_CMD    = qr{            = [^\W\d]\w+ [^\n]* (?= \n\n )}xms;
-    my $POD_CUT    = qr{ (?! \n\n ) = cut $SPACE        (?= \n\n )}xms;
+    my $space_re      = qr{ [^\S\n]*               }xms;
+    my $head_start_re = qr{ ^=head1                }xms;
+    my $head_end_re   = qr{ (?= $head_start_re | \z)  }xms;
+    my $pod_cmd_re    = qr{            = [^\W\d]\w+ [^\n]* (?= \n\n )}xms;
+    my $pod_cut_re    = qr{ (?! \n\n ) = cut $space_re        (?= \n\n )}xms;
 
-    my $NAME  = qr{ $SPACE NAME    $SPACE \n }xms;
-    my $VERS  = qr{ $SPACE VERSION $SPACE \n }xms;
-    my $USAGE = qr{ $SPACE USAGE   $SPACE \n }xms;
+    my $name_re  = qr{ $space_re NAME    $space_re \n }xms;
+    my $vers_re  = qr{ $space_re VERSION $space_re \n }xms;
+    my $usage_re = qr{ $space_re USAGE   $space_re \n }xms;
 
-    my $STD = qr{ STANDARD | STD | PROGRAM | SCRIPT | CLI  | COMMAND(?:-|\s)?LINE }xms;
-    my $ARG = qr{ $SPACE (?:PARAM(?:ETER)?|ARG(?:UMENT)?)S? }xms;
+    my $std_re = qr{ STANDARD | STD | PROGRAM | SCRIPT | CLI  | COMMAND(?:-|\s)?LINE }xms;
+    my $arg_re = qr{ $space_re (?:PARAM(?:ETER)?|ARG(?:UMENT)?)S? }xms;
 
-    my $OPTIONS  = qr{ $SPACE $STD? $SPACE OPTION(?:AL|S)?        $ARG? $SPACE \n }xms;
-    my $REQUIRED = qr{ $SPACE $STD? $SPACE (?:REQUIRED|MANDATORY) $ARG? $SPACE \n }xms;
+    my $options_re  = qr{ $space_re $std_re? $space_re OPTION(?:AL|S)?        $arg_re? $space_re \n }xms;
+    my $required_re = qr{ $space_re $std_re? $space_re (?:REQUIRED|MANDATORY) $arg_re? $space_re \n }xms;
 
-    my $EUCLID_ARG = qr{ ^=item \s* ([^\n]*?) \s* \n\s*\n
+    my $euclid_arg = qr{ ^=item \s* ([^\n]*?) \s* \n\s*\n
                         (
                         .*?
                         (?:
@@ -393,63 +393,63 @@ sub _parse_pod {
                     }xms;
 
     # Clean up line delimiters
-    $man =~ s{ [\n\r] }{\n}gx;
+    $MAN =~ s{ [\n\r] }{\n}gx;
 
     # Clean up significant entities...
-    $man =~ s{ E<lt> }{<}gxms;
-    $man =~ s{ E<gt> }{>}gxms;
+    $MAN =~ s{ E<lt> }{<}gxms;
+    $MAN =~ s{ E<gt> }{>}gxms;
 
     # Put program name in man
     $SCRIPT_NAME = (-e $0) ? (splitpath $0)[-1] : 'one-liner';
-    $man =~ s{ ($HEAD_START $NAME \s*) .*? (- .*)? $HEAD_END }
+    $MAN =~ s{ ($head_start_re $name_re \s*) .*? (- .*)? $head_end_re }
               {$1.$SCRIPT_NAME.($2 ? " $2" : "\n\n")}xems;
 
     # Put version number in man
     ($SCRIPT_VERSION) = 
-        $man =~ m/$HEAD_START $VERS .*? (\d+(?:[._]\d+)+) .*? $HEAD_END /xms;
+        $MAN =~ m/$head_start_re $vers_re .*? (\d+(?:[._]\d+)+) .*? $head_end_re /xms;
     if ( !defined $SCRIPT_VERSION ) {
         $SCRIPT_VERSION = $main::VERSION;
     }
     if ( !defined $SCRIPT_VERSION ) {
         $SCRIPT_VERSION = (-e $0) ? localtime((stat $0)[9]) : 'one-liner';
     }
-    $man =~ s{ ($HEAD_START $VERS    \s*) .*? (\s*) $HEAD_END }
+    $MAN =~ s{ ($head_start_re $vers_re    \s*) .*? (\s*) $head_end_re }
              {$1This document refers to $SCRIPT_NAME version $SCRIPT_VERSION $2}xms;
 
     # Extra info from PODs
     my ($options, $opt_name, $required, $req_name, $licence);
-    while ($man =~ m/$HEAD_START ($REQUIRED) (.*?) $HEAD_END /gxms) {
+    while ($MAN =~ m/$head_start_re ($required_re) (.*?) $head_end_re /gxms) {
         # Required arguments
         my ( $more_req_name, $more_required ) = ($1, $2);
         $req_name = $more_req_name if not defined $req_name;
         $required = ( $more_required || q{} ) . ( $required || q{} );
     }
-    while ($man =~ m/$HEAD_START ($OPTIONS)  (.*?) $HEAD_END /gxms) {
+    while ($MAN =~ m/$head_start_re ($options_re)  (.*?) $head_end_re /gxms) {
         # Optional arguments
         my ( $more_opt_name, $more_options ) = ($1, $2);
         $opt_name = $more_opt_name if not defined $opt_name;
         $options = ( $more_options || q{} ) . ( $options || q{} );
     }
-    while ($man =~ m/$HEAD_START [^\n]+ (?i: licen[sc]e | copyright ) .*? \n \s* (.*?) \s* $HEAD_END /gxms) {
+    while ($MAN =~ m/$head_start_re [^\n]+ (?i: licen[sc]e | copyright ) .*? \n \s* (.*?) \s* $head_end_re /gxms) {
         # License information
         my ($more_licence) = ($1, $2);
         $licence = ( $more_licence || q{} ) . ( $licence || q{} );
     }
 
     # Clean up interface titles...
-    for my $name ( $opt_name, $req_name ) {
-        next if !defined $name;
-        $name =~ s{\A \s+ | \s+ \z}{}gxms;
+    for my $name_re ( $opt_name, $req_name ) {
+        next if !defined $name_re;
+        $name_re =~ s{\A \s+ | \s+ \z}{}gxms;
     }
 
     # Extract the actual interface and store each arg entry into a hash of specifications...
     my $seq  = 0;
     my $seen = {};
-    while ( ( $required || q{} ) =~ m{ $EUCLID_ARG }gxms ) {
+    while ( ( $required || q{} ) =~ m{ $euclid_arg }gxms ) {
         $seen = _register_specs( $1, $2, $seq, \%requireds, \%longnames, $seen );
         $seq++;
     }
-    while ( ( $options  || q{} ) =~ m{ $EUCLID_ARG }gxms ) {
+    while ( ( $options  || q{} ) =~ m{ $euclid_arg }gxms ) {
         $seen = _register_specs( $1, $2, $seq, \%options, \%longnames, $seen );
         $seq++;
     }
@@ -478,9 +478,9 @@ sub _parse_pod {
     $arg_summary =~ s/\s+/ /gxms;
 
     # Manual message
-    $man =~ s{ ($HEAD_START $USAGE    \s*) .*? (\s*) $HEAD_END } {$1$SCRIPT_NAME $arg_summary$2}xms;
-    $man =~ s{ ($HEAD_START $REQUIRED \s*) .*? (\s*) $HEAD_END } {$1$required$2}xms;
-    $man =~ s{ ($HEAD_START $OPTIONS  \s*) .*? (\s*) $HEAD_END } {$1$options$2}xms;
+    $MAN =~ s{ ($head_start_re $usage_re    \s*) .*? (\s*) $head_end_re } {$1$SCRIPT_NAME $arg_summary$2}xms;
+    $MAN =~ s{ ($head_start_re $required_re \s*) .*? (\s*) $head_end_re } {$1$required$2}xms;
+    $MAN =~ s{ ($head_start_re $options_re  \s*) .*? (\s*) $head_end_re } {$1$options$2}xms;
 
     # Usage message
     $usage  = "       $SCRIPT_NAME $arg_summary\n";
@@ -520,22 +520,22 @@ sub _parse_pod {
 
 
 sub _register_specs {
-    my ($name, $spec, $seq, $storage, $longnames, $seen) = @_;
-    my @variants = _get_variants($name);
-    $storage->{$name} = {
+    my ($name_re, $spec, $seq, $storage, $longnames, $seen) = @_;
+    my @variants = _get_variants($name_re);
+    $storage->{$name_re} = {
         seq      => $seq,
         src      => $spec,
-        name     => $name,
+        name     => $name_re,
         variants => \@variants,
     };
     if ($minimal_keys) {
-        my $minimal = _minimize_name($name);
+        my $minimal = _minimize_name($name_re);
         croak "Internal error: minimalist mode caused arguments ".
-           "'$name' and '".$seen->{$minimal}."' to clash"
+           "'$name_re' and '".$seen->{$minimal}."' to clash"
            if $seen->{$minimal};
-        $seen->{$minimal} = $name;
+        $seen->{$minimal} = $name_re;
     }
-    $longnames->{ _longestname(@variants) } = $name;
+    $longnames->{ _longestname(@variants) } = $name_re;
     return $seen;
 }
 
@@ -609,7 +609,7 @@ sub _process_euclid_specs {
                     $arg->{var}{$var}{constraint} =
                       $matchtype =~ m{\A\s*/.*/\s*\z}xms
                       ? sub { 1 }
-                      : $STD_CONSTRAINT_FOR{$matchtype}
+                      : $std_constraint_for{$matchtype}
                       or _fail("Unknown .type constraint: $spec");
                 }
 
@@ -745,11 +745,11 @@ sub _get_variable_names {
 
 
 sub _minimize_name {
-    my ($name) = @_;
-    $name =~ s{[][]}{}gxms;                      # remove all square brackets
-    $name =~ s{\A \W+ ([\w-]*) .* \z}{$1}gxms;
-    $name =~ s{-}{_}gxms;
-    return $name;
+    my ($name_re) = @_;
+    $name_re =~ s{[][]}{}gxms;                      # remove all square brackets
+    $name_re =~ s{\A \W+ ([\w-]*) .* \z}{$1}gxms;
+    $name_re =~ s{-}{_}gxms;
+    return $name_re;
 }
 
 
@@ -1029,7 +1029,7 @@ sub _convert_to_regex {
                my $matcher =
                    $type =~ m{\A\s*/.*/\s*\z}xms
                    ? eval "qr$type"
-                   : $STD_MATCHER_FOR{ $type }
+                   : $std_matcher_for{ $type }
                    or _fail("Unknown type ($type) in specification: $arg_name");
                $var_rep ?
                  "(?:[\\s\\0\\1]*$no_match($matcher)(?{push \@{(\$ARGV{q{$arg_name}}||=[{}])->[-1]{q{$var_name}}}, \$^N}))+"
@@ -1060,7 +1060,7 @@ sub _convert_to_regex {
                my $type_error = $arg->{var}{$var_name}{type_error} || q{};
                my $matcher = $type =~ m{\A\s*/.*/\s*\z}xms
                                 ? eval "qr$type"
-                                : $STD_MATCHER_FOR{ $type };
+                                : $std_matcher_for{ $type };
                "(?:($matcher|([^\\s\\0\\1]+)"
                . "(?{\$bad_type ||= "
                . "{arg=>q{$arg_name},type=>q{$type},type_error=>q{$type_error}, var=>q{<$var_name>},val=>\$^N};})))"
@@ -1099,13 +1099,13 @@ sub _print_pod {
 sub _validate_name {
     # Check that the argument name only has pairs of < > brackets (ticket 34199)
     # Return the name of the variables that this argument specifies
-    my ($name) = @_;
-    if ($name =~ m/[<>]/) { # skip expensive Text::Balance functions if possible
+    my ($name_re) = @_;
+    if ($name_re =~ m/[<>]/) { # skip expensive Text::Balance functions if possible
         my %var_names;
-        for my $s (extract_multiple($name,[sub{extract_bracketed($_[0],'<>')}],undef,0)) {
+        for my $s (extract_multiple($name_re,[sub{extract_bracketed($_[0],'<>')}],undef,0)) {
             $s =~ s/^<(.*)>$/$1/;
             if ( $s =~ m/[<>]/ ) {
-                _fail( 'Invalid argument specification: '.$name );
+                _fail( 'Invalid argument specification: '.$name_re );
             }
             $var_names{$s} = undef;
         }
@@ -1117,7 +1117,7 @@ sub _validate_name {
 
 
 sub _get_variants {
-    my @arg_desc = shift =~ m{ [^[|]+ (?: $OPTIONAL [^[|]* )* }gmxs;
+    my @arg_desc = shift =~ m{ [^[|]+ (?: $optional_re [^[|]* )* }gmxs;
 
     for (@arg_desc) {
         s{^ \s+ | \s+ $}{}gxms;
@@ -1175,9 +1175,9 @@ sub _export_var {
 sub _make_equivalent {
     my ( $hash_ref, %alias_hash ) = @_;
 
-    while ( my ( $name, $aliases ) = each %alias_hash ) {
+    while ( my ( $name_re, $aliases ) = each %alias_hash ) {
         for my $alias (@$aliases) {
-            $hash_ref->{$alias} = $hash_ref->{$name};
+            $hash_ref->{$alias} = $hash_ref->{$name_re};
         }
     }
 
@@ -1499,7 +1499,7 @@ current script (and its dependencies), use the C<process_pods()> subroutine.
 
     use Getopt::Euclid ();
     my @pods = ( 'script.pl', 'Module.pm' );
-    Getopt::Euclid->process_pods(\@pods, {-strict => 1});
+    $Getopt::Eudlid::MAN = Getopt::Euclid->process_pods(\@pods, {-strict => 1});
     my @args = ( '-in', 'file.txt', '-out', 'results.txt' );
     Getopt::Euclid->process_args(\@args);
 
