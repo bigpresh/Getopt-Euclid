@@ -112,12 +112,12 @@ sub import {
     return unless _get_pod_names();
 
     # Extract POD of given files
-    $MAN = Getopt::Euclid->process_pods( [reverse @pod_names] );
+    $MAN = __PACKAGE__->process_pods( [reverse @pod_names] );
     undef @pod_names;
     $has_run = 1;
 
     # Parse POD + parse and export arguments
-    Getopt::Euclid->process_args( \@ARGV ) unless $defer;
+    __PACKAGE__->process_args( \@ARGV ) unless $defer;
 
     return 1;
 }
@@ -187,19 +187,19 @@ sub process_args {
 
     # Handle standard args...
     if ( first { $_ eq '--man' } @$args ) {
-        _print_pod( Getopt::Euclid->man(), 'paged' );
+        _print_pod( __PACKAGE__->man(), 'paged' );
         exit;
     }
     elsif ( first { $_ eq '--usage' } @$args ) {
-        print Getopt::Euclid->usage();
+        print __PACKAGE__->usage();
         exit;
     }
     elsif ( first { $_ eq '--help' } @$args ) {
-        _print_pod( Getopt::Euclid->help(), 'paged' );
+        _print_pod( __PACKAGE__->help(), 'paged' );
         exit;
     }
     elsif ( first { $_ eq '--version' } @$args ) {
-        print Getopt::Euclid->version();
+        print __PACKAGE__->version();
         exit;
     }
     elsif ( first { $_ eq '--podfile' } @$args ) {
@@ -326,7 +326,7 @@ sub podfile {
     my ($name_re, $path, $suffix) = fileparse($0, qr/\.[^.]*/);
     my $pod_file = catfile( $path, $name_re.'.pod' );
     open my $out_fh, '>', $pod_file or croak "Could not write file $pod_file because $!";
-    print $out_fh $pod_file_msg."\n\n".Getopt::Euclid->man();
+    print $out_fh $pod_file_msg."\n\n".__PACKAGE__->man();
     close $out_fh;
     return $pod_file;
 }
@@ -1245,7 +1245,7 @@ sub _insert_default_values {
                     } elsif (ref($var->{$default_type}) eq '') {
                         $var_default = $var->{$default_type};
                     } else {
-                        carp "Getopt::Euclid found an unexpected default value type";
+                        carp 'Getopt::Euclid found an unexpected default value type';
                     }
                 } else {
                     $var_default = 'none';
@@ -1499,7 +1499,7 @@ current script (and its dependencies), use the C<process_pods()> subroutine.
 
     use Getopt::Euclid ();
     my @pods = ( 'script.pl', 'Module.pm' );
-    $Getopt::Eudlid::MAN = Getopt::Euclid->process_pods(\@pods, {-strict => 1});
+    $Getopt::Euclid::MAN = Getopt::Euclid->process_pods(\@pods, {-strict => 1});
     my @args = ( '-in', 'file.txt', '-out', 'results.txt' );
     Getopt::Euclid->process_args(\@args);
 
