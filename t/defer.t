@@ -35,8 +35,13 @@ sub got_arg {
 }
 
 
-is scalar @ARGV, 13 => '@ARGV processing was defered';
-is keys %ARGV, 0 => '%ARGV processing was defered';
+my @args  = @ARGV;
+
+
+# Process arguments, no options
+
+is scalar @ARGV, 13 => '@ARGV processing was deferred';
+is keys %ARGV, 0 => '%ARGV processing was deferred';
 
 Getopt::Euclid->process_args(\@ARGV);
 
@@ -71,9 +76,56 @@ is ref $ARGV{size}, 'HASH'      => 'Hash reference returned for size';
 is $ARGV{size}{h}, $H           => 'Got expected value for size <h>';
 is $ARGV{size}{w}, $W           => 'Got expected value for size <w>';
 
-is $ARGV{-w},       's p a c e s'      => 'Handled alternation correctly';
+is $ARGV{-w}, 's p a c e s'     => 'Handled alternation correctly';
 
 is $ARGV{'<step>'}, 7.3      => 'Handled step size correctly';
+
+%ARGV = ();
+
+
+# Process arguments with minimal keys
+
+is scalar @args, 13 => '@ARGV processing was deferred';
+is keys %ARGV, 0 => '%ARGV processing was deferred';
+
+Getopt::Euclid->process_args(\@args, {-minimal_keys => 1});
+
+is scalar @args, 0 => '@ARGV was processed';
+is keys %ARGV, 19 => '%ARGV was processed';
+
+got_arg i       => $INFILE;
+got_arg infile  => $INFILE;
+
+got_arg l       => $LEN;
+got_arg len     => $LEN;
+got_arg length  => $LEN;
+got_arg lgth    => $LEN;
+
+got_arg girth   => 42;
+
+got_arg o       => $OUTFILE;
+got_arg ofile   => $OUTFILE;
+got_arg out     => $OUTFILE;
+got_arg outfile => $OUTFILE;
+
+got_arg no_fudge => 1;
+
+got_arg v       => 1,
+got_arg verbose => 1,
+
+is ref $ARGV{'timeout'}, 'HASH'     => 'Hash reference returned for timeout';
+is $ARGV{'timeout'}{min}, $TIMEOUT  => 'Got expected value for timeout <min>';
+is $ARGV{'timeout'}{max}, -1        => 'Got default value for timeout <max>';
+
+is ref $ARGV{size}, 'HASH'      => 'Hash reference returned for size';
+is $ARGV{size}{h}, $H           => 'Got expected value for size <h>';
+is $ARGV{size}{w}, $W           => 'Got expected value for size <w>';
+
+is $ARGV{w}, 's p a c e s'      => 'Handled spaces correctly';
+
+is $ARGV{step}, 7.3      => 'Handled step size correctly';
+
+%ARGV = ();
 
 
 

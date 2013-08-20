@@ -178,11 +178,19 @@ sub process_args {
     # First, parse the POD specifications. Then, parse the given array of
     # arguments (\@ARGV or other) and populate %ARGV (or export specific
     # variable names).
-    my ($self, $args) = @_;
+    my ($self, $args, $options) = @_;
 
+    # Parse POD
     if (not $has_processed_pod) {
         _parse_pod();
         $has_processed_pod = 1;
+    }
+
+    # Set options for argument parsing
+    if (defined $options) {
+       if (exists $options->{-minimal_keys}) {
+          $minimal_keys = 1;
+       }
     }
 
     %ARGV = ();
