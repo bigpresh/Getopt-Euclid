@@ -22,6 +22,7 @@ my $pod_file_msg = "# This file was generated dynamically by $skip_keyword. Do n
 
 my $has_run = 0;
 my $has_processed_pod = 0;
+my $export_lvl = 1;
 my @pod_names;
 my $minimal_keys;
 my $vars_prefix;
@@ -106,6 +107,7 @@ sub import {
     @_ = grep { !( /:vars(?:<(\w+)>)?/ and $vars_prefix  = $1 || 'ARGV_' ) } @_;
     @_ = grep { !( /:defer/            and $defer        = 1             ) } @_;
     croak "Unknown mode ('$_')" for @_;
+    $export_lvl++ if not $defer;
 
     # No POD parsing and argument processing in Perl compile mode (ticket 34195)
     return if $^C;
@@ -190,6 +192,9 @@ sub process_args {
     if (defined $options) {
        if (exists $options->{-minimal_keys}) {
           $minimal_keys = 1;
+       }
+       if (exists $options->{-vars}) {
+          $vars_prefix = $options->{-vars};
        }
     }
 
@@ -1174,7 +1179,7 @@ sub _export_var {
     my ( $prefix, $key, $value ) = @_;
     my $export_as = $prefix . $key;
     $export_as =~ s{\W}{_}gxms;    # mainly for '-'
-    my $callpkg = caller(2+($Exporter::ExportLevel || 0)); # at import()'s level
+    my $callpkg = caller( $export_lvl + ($Exporter::ExportLevel || 0) );
     no strict 'refs';
     *{"$callpkg\::$export_as"} = ( ref $value ) ? $value : \$value;
     return 1;
@@ -1440,7 +1445,7 @@ remove the command-line arguments from C<@ARGV> and parse them, and
 =item 5.
 
 put the results in the global C<%ARGV> variable (or into specifically named
-optional variables, if you request that -- see L<Exporting Option Variables>).
+optional variables, if you request that -- see L<Exporting option variables>).
 
 =back
 
@@ -1453,11 +1458,11 @@ that it adds the POD from the caller module to the POD of the callee.
 
 All of which just means you can put some or all of your CLI specification
 in a module, rather than in the application's source file.
-See L<Module Interface> for more details.
+See L<Module interface> for more details.
 
 =head1 INTERFACE 
 
-=head2 Program Interface
+=head2 Program interface
 
 You write:
 
@@ -1465,7 +1470,7 @@ You write:
 
 and your command-line is parsed automagically.
 
-=head2 Module Interface
+=head2 Module interface
 
 =over
 
@@ -1502,6 +1507,15 @@ C<process_args()> subroutine.
     my @args = ( '-in', 'file.txt', '-out', 'results.txt' );
     Getopt::Euclid->process_args(\@args);
 
+If you want to use the :minimal or :vars mode in this type of scenario, you can
+pass extra options to C<process_args()>:
+
+    use Getopt::Euclid qw(:defer);
+    my @args = ( '-in', 'file.txt', '-out', 'results.txt' );
+    Getopt::Euclid->process_args(\@args, {-minimal => 1, -vars => 'prefix_'});
+
+This is particularly when you plan on processing POD manually.
+
 =item process_pods()
 
 Similarly, to parse argument specifications from a source different than the
@@ -1519,7 +1533,7 @@ and .pm files and use these .pod files preferentially when available. Set
 
 =back
 
-=head2 POD Interface
+=head2 POD interface
 
 This is where all the action is. POD markup can be placed in a .pod file that
 has the same prefix as the corresponding Perl file. Alternatively, POD can be
@@ -2246,7 +2260,7 @@ as a cuddled version of:
 
     -v -x -e'print time'
 
-=head2 Exporting Option Variables
+=head2 Exporting option variables
 
 By default, the module only stores arguments into the global %ARGV hash.
 You can request that options are exported as variables into the calling package
@@ -2391,7 +2405,7 @@ Note that, in rare cases, using this mode may cause you to lose
 data (for example, if the interface specifies both a C<--step> and
 a C<< <step> >> option). The module throws an exception if this happens.
 
-=head2 Defering argument parsing
+=head2 Deferring argument parsing
 
 In some instances, you may want to avoid the parsing of arguments to take place
 as soon as your program is executed and Getopt::Euclid is loaded. For example,
