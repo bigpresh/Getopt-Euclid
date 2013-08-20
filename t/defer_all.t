@@ -24,7 +24,7 @@ is scalar @ARGV, 3 => '@ARGV processing was defered';
 is keys %ARGV, 0 => '%ARGV processing was defered';
 
 my @pods = ( './t/lib/HierDemo2.pm' );
-$Getopt::Euclid::MAN = Getopt::Euclid->process_pods(\@pods);
+Getopt::Euclid->process_pods(\@pods);
 
 
 is scalar @ARGV, 3 => '@ARGV processing was defered';

@@ -112,7 +112,7 @@ sub import {
     return unless _get_pod_names();
 
     # Extract POD of given files
-    $MAN = __PACKAGE__->process_pods( [reverse @pod_names] );
+    __PACKAGE__->process_pods( [reverse @pod_names] );
     undef @pod_names;
     $has_run = 1;
 
@@ -167,8 +167,8 @@ sub process_pods {
 
     }
     close $pod_fh;
-
-    return $pod_string;
+    $MAN = $pod_string;
+    return 1;
 }
 
 
