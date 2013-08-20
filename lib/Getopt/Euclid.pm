@@ -30,17 +30,19 @@ my $matcher;
 my %requireds;
 my %options;
 my %longnames;
+our $man;    # --man     message
 my $help;    # --help    message
 my $usage;   # --usage   message
 my $version; # --version message
 
+my $optional_re;
+$optional_re = qr{ \[ [^[]* (?: (??{$optional_re}) [^[]* )* \] }xms;
+
+
 # Global variables
-our $MAN;    # --man     message (ticket # 87592)
 our $SCRIPT_NAME;
 our $SCRIPT_VERSION; # for ticket # 55259
 
-my $optional_re;
-$optional_re = qr{ \[ [^[]* (?: (??{$optional_re}) [^[]* )* \] }xms;
 
 # Convert arg specification syntax to Perl regex syntax
 
@@ -167,7 +169,7 @@ sub process_pods {
 
     }
     close $pod_fh;
-    $MAN = $pod_string;
+    $man = $pod_string;
     return 1;
 }
 
@@ -333,7 +335,7 @@ sub podfile {
 
 
 sub man {
-    return $MAN;
+    return $man;
 }
 
 
@@ -393,44 +395,44 @@ sub _parse_pod {
                     }xms;
 
     # Clean up line delimiters
-    $MAN =~ s{ [\n\r] }{\n}gx;
+    $man =~ s{ [\n\r] }{\n}gx;
 
     # Clean up significant entities...
-    $MAN =~ s{ E<lt> }{<}gxms;
-    $MAN =~ s{ E<gt> }{>}gxms;
+    $man =~ s{ E<lt> }{<}gxms;
+    $man =~ s{ E<gt> }{>}gxms;
 
     # Put program name in man
     $SCRIPT_NAME = (-e $0) ? (splitpath $0)[-1] : 'one-liner';
-    $MAN =~ s{ ($head_start_re $name_re \s*) .*? (- .*)? $head_end_re }
+    $man =~ s{ ($head_start_re $name_re \s*) .*? (- .*)? $head_end_re }
               {$1.$SCRIPT_NAME.($2 ? " $2" : "\n\n")}xems;
 
     # Put version number in man
     ($SCRIPT_VERSION) = 
-        $MAN =~ m/$head_start_re $vers_re .*? (\d+(?:[._]\d+)+) .*? $head_end_re /xms;
+        $man =~ m/$head_start_re $vers_re .*? (\d+(?:[._]\d+)+) .*? $head_end_re /xms;
     if ( !defined $SCRIPT_VERSION ) {
         $SCRIPT_VERSION = $main::VERSION;
     }
     if ( !defined $SCRIPT_VERSION ) {
         $SCRIPT_VERSION = (-e $0) ? localtime((stat $0)[9]) : 'one-liner';
     }
-    $MAN =~ s{ ($head_start_re $vers_re    \s*) .*? (\s*) $head_end_re }
+    $man =~ s{ ($head_start_re $vers_re    \s*) .*? (\s*) $head_end_re }
              {$1This document refers to $SCRIPT_NAME version $SCRIPT_VERSION $2}xms;
 
     # Extra info from PODs
     my ($options, $opt_name, $required, $req_name, $licence);
-    while ($MAN =~ m/$head_start_re ($required_re) (.*?) $head_end_re /gxms) {
+    while ($man =~ m/$head_start_re ($required_re) (.*?) $head_end_re /gxms) {
         # Required arguments
         my ( $more_req_name, $more_required ) = ($1, $2);
         $req_name = $more_req_name if not defined $req_name;
         $required = ( $more_required || q{} ) . ( $required || q{} );
     }
-    while ($MAN =~ m/$head_start_re ($options_re)  (.*?) $head_end_re /gxms) {
+    while ($man =~ m/$head_start_re ($options_re)  (.*?) $head_end_re /gxms) {
         # Optional arguments
         my ( $more_opt_name, $more_options ) = ($1, $2);
         $opt_name = $more_opt_name if not defined $opt_name;
         $options = ( $more_options || q{} ) . ( $options || q{} );
     }
-    while ($MAN =~ m/$head_start_re [^\n]+ (?i: licen[sc]e | copyright ) .*? \n \s* (.*?) \s* $head_end_re /gxms) {
+    while ($man =~ m/$head_start_re [^\n]+ (?i: licen[sc]e | copyright ) .*? \n \s* (.*?) \s* $head_end_re /gxms) {
         # License information
         my ($more_licence) = ($1, $2);
         $licence = ( $more_licence || q{} ) . ( $licence || q{} );
@@ -478,9 +480,9 @@ sub _parse_pod {
     $arg_summary =~ s/\s+/ /gxms;
 
     # Manual message
-    $MAN =~ s{ ($head_start_re $usage_re    \s*) .*? (\s*) $head_end_re } {$1$SCRIPT_NAME $arg_summary$2}xms;
-    $MAN =~ s{ ($head_start_re $required_re \s*) .*? (\s*) $head_end_re } {$1$required$2}xms;
-    $MAN =~ s{ ($head_start_re $options_re  \s*) .*? (\s*) $head_end_re } {$1$options$2}xms;
+    $man =~ s{ ($head_start_re $usage_re    \s*) .*? (\s*) $head_end_re } {$1$SCRIPT_NAME $arg_summary$2}xms;
+    $man =~ s{ ($head_start_re $required_re \s*) .*? (\s*) $head_end_re } {$1$required$2}xms;
+    $man =~ s{ ($head_start_re $options_re  \s*) .*? (\s*) $head_end_re } {$1$options$2}xms;
 
     # Usage message
     $usage  = "       $SCRIPT_NAME $arg_summary\n";
