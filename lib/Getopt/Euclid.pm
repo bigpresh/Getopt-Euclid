@@ -1002,7 +1002,7 @@ sub _type_error {
         $msg =~ s{(?<!<)\b$var_name\b|\b$var_name\b(?!>)}{$var_val}gxms;
     } else {
         $msg = qq{<$var_name> must be $var_constraint but the supplied value }.
-               qq{("$var_val") isn't.};
+               qq{("$var_val") is not.};
     }
     return $msg;
 }
@@ -1489,7 +1489,7 @@ by loading your module.
 
 To accomplish this trick Getopt::Euclid installs an C<import()>
 subroutine in your module. If your module already has an C<import()>
-subroutine defined, terrible things happen. So don't do that.
+subroutine defined, terrible things happen. So do not do that.
 
 You may also short-circuit the import method within your calling program to
 have the POD from several modules included for argument parsing.
@@ -1788,7 +1788,7 @@ they appear. For example, a common idiom is:
 
     =item --noprint
 
-    Don't print results
+    Do not print results
 
 These two arguments are effectively the same argument, just with opposite
 boolean values. However, as specified above, only one of C<$ARGV{'--print'}>
@@ -1799,7 +1799,7 @@ and sets both appropriately:
 
     =item --[no]print
 
-    [Don't] print results
+    [Do not] print results
 
     =for Euclid:
         false: --noprint
@@ -1892,7 +1892,7 @@ has any additional placeholders, the entire entry in C<%ARGV> becomes a hash:
         = $ARGV{'<h>'}{'h'} * $ARGV{'<h>'}{'w'}
 
 Note that, as in earlier multi-placeholder examples, the individual second-
-level placeholder keys I<don't> retain their angle-brackets.
+level placeholder keys I<do not> retain their angle-brackets.
 
 =head2 Repeated placeholders
 
@@ -2070,7 +2070,7 @@ informative to users.
 
 =head2 Placeholder type errors
 
-If a command-line argument's placeholder value doesn't satisify the specified
+If a command-line argument's placeholder value does not satisify the specified
 type, an error message is automatically generated. However, you can provide
 your own message instead, using the C<.type.error> specifier:
 
@@ -2079,7 +2079,7 @@ your own message instead, using the C<.type.error> specifier:
         h.type.error:  <h> must be between 0 and 100 (not h)
 
         w.type:        number,  Math::is_prime(w) || w % 2 == 0
-        w.type.error:  Can't use w for <w> (must be an even prime number)
+        w.type.error:  Cannot use w for <w> (must be an even prime number)
 
 Whenever an explicit error message is provided, any occurrence within
 the message of the placeholder's unbracketed name is replaced by the
@@ -2087,8 +2087,8 @@ placeholder's value (just as in the type test itself).
 
 =head2 Placeholder defaults
 
-You can also specify a default value for any placeholders that aren't
-given values on the command-line (either because their argument isn't
+You can also specify a default value for any placeholders that are not
+given values on the command-line (either because their argument is not
 provided at all, or because the placeholder is optional within the argument).
 For example:
 
@@ -2297,7 +2297,7 @@ type of the corresponding value in C<%ARGV>. Command-line flags and arguments
 that take single values will produce scalars, arguments that take multiple
 values will produce hashes, and repeatable arguments will produce arrays.
 
-If you don't like the default prefix of "ARGV_", you can specify your own,
+If you do not like the default prefix of "ARGV_", you can specify your own,
 such as "opt_", like this:
 
     use Getopt::Euclid qw( :vars<opt_> );
@@ -2445,7 +2445,7 @@ C<import()> as well defeats the purpose.
 =item Unknown specification: %s
 
 You specified something in a C<=for Euclid> section that
-Getopt::Euclid didn't understand. This is often caused by typos, or by
+Getopt::Euclid did not understand. This is often caused by typos, or by
 reversing a I<placeholder>.I<type> or I<placeholder>.I<default>
 specification (that is, writing I<type>.I<placeholder> or
 I<default>.I<placeholder> instead).
@@ -2455,12 +2455,12 @@ I<default>.I<placeholder> instead).
 =item Unknown .type constraint: %s
 
 Both these errors mean that you specified a type constraint that
-Getopt::Euclid didn't recognize. This may have been a typo:
+Getopt::Euclid did not recognize. This may have been a typo:
 
     =for Euclid
         count.type: inetger
 
-or else the module simply doesn't know about the type you specified:
+or else the module simply does not know about the type you specified:
 
     =for Euclid
         count.type: complex
@@ -2470,7 +2470,7 @@ I<does> recognize.
 
 =item Invalid .type constraint: %s
 
-You specified a type constraint that isn't valid Perl. For example:
+You specified a type constraint that is not valid Perl. For example:
 
     =for Euclid
         max.type: integer not equals 0
@@ -2482,7 +2482,7 @@ instead of:
 
 =item Invalid .default value: %s
 
-You specified a default value that isn't valid Perl. For example:
+You specified a default value that is not valid Perl. For example:
 
     =for Euclid
         curse.default: *$@!&
@@ -2548,7 +2548,7 @@ that this is not a typo.
 =item Invalid constraint: %s (No <%s> placeholder in argument: %s)
 
 You attempted to define a C<.type> constraint for a placeholder that
-didn't exist. Typically this is the result of the misspelling of a
+did not exist. Typically this is the result of the misspelling of a
 placeholder name:
 
     =item -foo <bar>
@@ -2568,7 +2568,7 @@ or a C<=for Euclid:> that has drifted away from its argument:
 =item Getopt::Euclid loaded a second time
 
 You tried to load the module twice in the same program.
-Getopt::Euclid doesn't work that way. Load it only once.
+Getopt::Euclid does not work that way. Load it only once.
 
 =item Unknown mode ('%s')
 
@@ -2598,9 +2598,9 @@ The following diagnostics are caused by problems in parsing the command-line
 =item Missing required argument(s): %s
 
 At least one argument specified in the C<REQUIRED ARGUMENTS> POD section
-wasn't present on the command-line.
+was not present on the command-line.
 
-=item Invalid %s argument. %s must be %s but the supplied value (%s) isn't.
+=item Invalid %s argument. %s must be %s but the supplied value (%s) is not.
 
 Getopt::Euclid recognized the argument you were trying to specify on the
 command-line, but the value you gave to one of that argument's placeholders
@@ -2608,7 +2608,7 @@ was of the wrong type.
 
 =item Unknown argument: %s
 
-Getopt::Euclid didn't recognize an argument you were trying to specify on the
+Getopt::Euclid did not recognize an argument you were trying to specify on the
 command-line. This is often caused by command-line typos or an incomplete
 interface specification.
 
