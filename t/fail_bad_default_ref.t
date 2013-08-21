@@ -28,7 +28,7 @@ BEGIN {
 if (eval { require Getopt::Euclid and Getopt::Euclid->import(); 1 }) {
     ok 0 => 'Unexpectedly succeeded';
 } else {
-    like $@, qr/Getopt::Euclid: Invalid reference to field XXX.default in this argument description:/
+    like $@, qr/Getopt::Euclid: Invalid reference to field XXX.default in argument description:/
          => 'Failed as expected';
 }
 

@@ -640,7 +640,7 @@ sub _process_euclid_specs {
                                       1;
 
                 if ($field eq 'opt_default') {
-                    # Check that placeholder is flagged
+                    # Check that argument is flagged
                     if ( $arg->{name} =~ m{^<}xms ) {
                        _fail( "Invalid .$field constraint: $spec\nParameter ".
                            "$arg->{name} must have a flag" );
@@ -1122,13 +1122,14 @@ sub _print_pod {
 sub _validate_name {
     # Check that the argument name only has pairs of < > brackets (ticket 34199)
     # Return the name of the variables that this argument specifies
-    my ($name_re) = @_;
-    if ($name_re =~ m/[<>]/) { # skip expensive Text::Balance functions if possible
+    my ($name) = @_;
+    if ($name =~ m/[<>]/) { # skip expensive Text::Balance functions if possible
         my %var_names;
-        for my $s (extract_multiple($name_re,[sub{extract_bracketed($_[0],'<>')}],undef,0)) {
+        for my $s (extract_multiple($name,[sub{extract_bracketed($_[0],'<>')}],undef,0)) {
+            next if not $s =~ m/[<>]/;
             $s =~ s/^<(.*)>$/$1/;
             if ( $s =~ m/[<>]/ ) {
-                _fail( 'Invalid argument specification: '.$name_re );
+                _fail( 'Invalid argument specification: '.$name );
             }
             $var_names{$s} = undef;
         }
@@ -1278,7 +1279,7 @@ sub _insert_default_values {
         }
         if ($item_spec =~ m/(\S+(\.(?:opt_)?default))/) {
             my ($reference, $default_type) = ($1, $2);
-            _fail( "Invalid reference to field $reference in this argument ".
+            _fail( "Invalid reference to field $reference in argument ".
                    "description:\n$item_spec" );
         }
         $pod_string .= $item_spec;
@@ -2504,7 +2505,7 @@ instead of:
 
 Same as previous diagnostic, but for optional defaults.
 
-=item Invalid reference to field (%s.default) in argument description: %s
+=item Invalid reference to field %s.default in argument description: %s
 
 You referred to a default value in the description of an argument, but there
 is no such default. It may be a typo, or you may be referring to the default
@@ -2526,7 +2527,7 @@ instead of:
     =for Euclid
         age.default: 21
 
-=item Invalid reference to field %s.opt_defaul) in this argument description: %s
+=item Invalid reference to field %s.opt_default in argument description: %s
 
 Same as previous diagnostic, but for optional defaults.
 
