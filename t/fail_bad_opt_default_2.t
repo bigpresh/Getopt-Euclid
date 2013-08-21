@@ -10,17 +10,18 @@ BEGIN {
 BEGIN {
     $INFILE  = $0;
     $OUTFILE = $0;
+    $LEN     = 42;
     $H       = 2;
     $W       = -10;
     $TIMEOUT = 7;
 
     @ARGV = (
-        "-i", $INFILE,
-        "-out=", $OUTFILE,
-        "-lgth",
-        "size", "${H}x${W}",
+        '-i', $INFILE,
+        "-out=$OUTFILE",
+        '-lgth', $LEN,
+        'size', "${H}x${W}",
         '-v',
-        "--timeout", $TIMEOUT,
+        '--timeout', $TIMEOUT,
         '--with', 's p a c e s',
         7,
     );
@@ -34,9 +35,10 @@ if (eval { require Getopt::Euclid and Getopt::Euclid->import(); 1 }) {
 else {
     like $@, qr/Getopt::Euclid: Invalid .opt_default constraint/
          => 'Failed as expected';
-    like $@, qr/Placeholder .* must be optional/
+    like $@, qr/Parameter .* must have a flag/
          => 'With expected message';
 }
+
 
 
 __END__
@@ -85,11 +87,11 @@ Specify height and width
 
 =item  -l[[en][gth]] <l>
 
-Display length [opt_default: 123]
+Display length [default: 24 ]
 
 =for Euclid:
-    l.type:        int > 0
-    l.opt_default: 123
+    l.type:    int > 0
+    l.default: 24
 
 =item  -girth <g>
 
@@ -105,14 +107,21 @@ Print all warnings
 =item --timeout [<min>] [<max>]
 
 =for Euclid:
-    min.type:        int
-    max.type:        int
-    max.default:     -1
-    max.opt_default: -3
+    min.type: int
+    max.type: int
+    max.default: -1
 
 =item -w <space> | --with <space>
 
 Test something spaced
+
+=item <step>
+
+Step size
+
+=for Euclid:
+    step.type: int
+    step.opt_default: 123
 
 =item --version
 

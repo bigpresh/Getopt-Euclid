@@ -563,7 +563,7 @@ sub _process_euclid_specs {
   ARG:
     while ( (undef, my $arg) = each %$args ) {
 
-        # Validate and record variables seen here...
+        # Validate and record variable names seen here...
         for my $var_name (@{_validate_name( $arg->{name} )}) {
             $var_list{$var_name} = undef;
         }
@@ -638,14 +638,22 @@ sub _process_euclid_specs {
                 $arg->{$has_field} = exists $arg->{$has_field} ?
                                       $arg->{$has_field}++ :
                                       1;
-                # Optional defaults need optional placeholders
+
                 if ($field eq 'opt_default') {
+                    # Check that placeholder is flagged
+                    if ( $arg->{name} =~ m{^<}xms ) {
+                       _fail( "Invalid .$field constraint: $spec\nParameter ".
+                           "$arg->{name} must have a flag" );
+                    }
+
+                    # Check that placeholder is optional
                     if ( $arg->{name} !~ m{\Q[<$var>]}xms ) {
-                       _fail( "Invalid .opt_default constraint: $spec\n(Placeholder".
-                           " <$var> has to be optional, i.e. [<$var>], to have ".
-                           "an optional default in argument: $arg->{name})" );
+                       _fail( "Invalid .$field constraint: $spec\nPlaceholder".
+                           " <$var> must be optional, i.e. [<$var>], to have ".
+                           "an optional default in argument: $arg->{name}" );
                     }
                 }
+
             }
             elsif ( $field eq 'excludes.error' ) {
                 $arg->{var}{$var}{excludes_error} = $val;
@@ -1200,7 +1208,7 @@ sub _make_equivalent {
 }
 
 
-# Report problems in specification...
+# Report problems in specification and die
 sub _fail {
     my (@msg) = @_;
     croak "Getopt::Euclid: @msg";
@@ -2109,7 +2117,7 @@ omitted entirely, both C<$ARGV{'-size'}{'h'}> and C<$ARGV{'-size'}{'w'}> are set
 to their respective default values
 
 However, Getopt::Euclid also supports a second type of default, optional defaults,
-that apply only to optional placeholders.
+that apply only to flagged, optional placeholders.
 
 For example:
 
@@ -2522,11 +2530,10 @@ instead of:
 
 Same as previous diagnostic, but for optional defaults.
 
-=item Invalid .opt_default constraint
+=item Invalid .opt_default constraint: Placeholder <%s> must be optional
 
 You specified an optional default but the placeholder that it affects is not an
-optional optional placeholder, i.e. an optional default has no effect on it. For
-example:
+optional placeholder. For example:
 
     =item  -l[[en][gth]] <l>
 
@@ -2536,6 +2543,24 @@ example:
 instead of:
 
     =item  -l[[en][gth]] [<l>]
+
+    =for Euclid:
+        l.opt_default: 123
+
+
+=item Invalid .opt_default constraint: Parameter %s must have a flag
+
+You specified an optional default but the parameter that it affects is
+unflagged. For example:
+
+    =item  <length>
+
+    =for Euclid:
+        l.opt_default: 123
+
+instead of:
+
+    =item  -l [<length>]
 
     =for Euclid:
         l.opt_default: 123
