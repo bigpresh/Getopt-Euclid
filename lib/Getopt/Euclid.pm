@@ -557,15 +557,16 @@ sub _register_specs {
 
 sub _process_euclid_specs {
     my ($args) = @_;
-    my %var_list;
+    my %all_var_list;
     my %excluded_by_def;
 
   ARG:
     while ( (undef, my $arg) = each %$args ) {
 
         # Validate and record variable names seen here...
-        for my $var_name (@{_validate_name( $arg->{name} )}) {
-            $var_list{$var_name} = undef;
+        my $var_list = _validate_name( $arg->{name} );
+        while (my ($var_name, undef) = each %$var_list) {
+            $all_var_list{$var_name} = undef;
         }
 
         # Process arguments with a Euclid specification further
@@ -640,13 +641,12 @@ sub _process_euclid_specs {
                                       1;
 
                 if ($field eq 'opt_default') {
-                    # Check that argument is flagged
+                    # Check that placeholders with optional defaults have a flagged argument
                     if ( $arg->{name} =~ m{^<}xms ) {
                        _fail( "Invalid .$field constraint: $spec\nParameter ".
                            "$arg->{name} must have a flag" );
                     }
-
-                    # Check that placeholder is optional
+                    # Check that placeholders with optional defaults is optional
                     if ( $arg->{name} !~ m{\Q[<$var>]}xms ) {
                        _fail( "Invalid .$field constraint: $spec\nPlaceholder".
                            " <$var> must be optional, i.e. [<$var>], to have ".
@@ -689,7 +689,7 @@ sub _process_euclid_specs {
         while ( my ($var, $var_specs) = each %{$arg->{var}} ) {
             # Check for invalid placeholder name in .excludes specifications
             for my $excl_var (@{$var_specs->{excludes}}) {
-                if (not exists $var_list{$excl_var}) {
+                if (not exists $all_var_list{$excl_var}) {
                     _fail( "Invalid .excludes value for variable <$var>: ".
                         "<$excl_var> does not exist\n" );
                 }
@@ -1125,17 +1125,19 @@ sub _validate_name {
     my ($name) = @_;
     if ($name =~ m/[<>]/) { # skip expensive Text::Balance functions if possible
         my %var_names;
+        my $pos = 0;
         for my $s (extract_multiple($name,[sub{extract_bracketed($_[0],'<>')}],undef,0)) {
             next if not $s =~ m/[<>]/;
             $s =~ s/^<(.*)>$/$1/;
             if ( $s =~ m/[<>]/ ) {
                 _fail( 'Invalid argument specification: '.$name );
             }
-            $var_names{$s} = undef;
+            $pos++;
+            $var_names{$s} = $pos if not exists $var_names{$s};
         }
-        return [keys %var_names];
+        return \%var_names;
     } else {    
-        return [];
+        return {};
     }
 }
 
