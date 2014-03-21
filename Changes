@@ -1,6 +1,6 @@
 Revision history for Getopt-Euclid
 
-0.4.5_001  2014-03-20
+0.4.5  2014-03-21
   - Fixed bug when parsing arguments with missing variable (reported by Torbjørn
     Lindahl)
 
