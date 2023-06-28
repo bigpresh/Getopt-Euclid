@@ -1902,7 +1902,7 @@ Any placeholder that is immediately followed by C<...>, like so:
         file.type: readable
 
 will match at least once, but as many times as possible before encountering
-the next argument on the command-line. This allows to specify multiple values
+the next argument on the command-line. This allows one to specify multiple values
 for an argument, for example:
 
     -lib file1.txt file2.txt
