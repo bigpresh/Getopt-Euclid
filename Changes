@@ -1,6 +1,8 @@
 Revision history for Getopt-Euclid
 
 {{$NEXT}}
+
+0.4.6  2023-06-28
   - David Precious (BIGPRESH) taking on maintainership
   - Avoid test failures on perls without '.' in @INC (reported by TODDR in
     RT#127234)
