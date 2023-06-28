@@ -1,5 +1,9 @@
 Revision history for Getopt-Euclid
 
+{{$NEXT}}
+  - David Precious (BIGPRESH) taking on maintainership
+  - Avoid test failures on perls without '.' in @INC
+
 0.4.5  2014-03-21
   - Fixed bug when parsing arguments with missing variable (reported by Torbjørn
     Lindahl)
